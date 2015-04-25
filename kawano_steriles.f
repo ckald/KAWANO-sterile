@@ -249,7 +249,6 @@ C50---------GO BACK TO MENU-----------------------------------------
       END
 
 
-
 C========================IDENTIFICATION DIVISION============================
 
       SUBROUTINE help
@@ -1791,6 +1790,7 @@ C..........INCREMENT VALUES.
         v(i) = v0(i) + .5*(dvdt(i)+dvdt0(i))*dt
         IF ((i.ge.4).and.(v(i).lt.ytmin)) v(i) = ytmin  !Set at minimum value.
       END DO
+
       GO TO 200
 
 C-------REFERENCES--------------------------------------
@@ -1819,10 +1819,16 @@ C-------REMARKS.
 C     Sets initial conditions.
 
 C-------PARAMETERS.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (const1=0.09615)   !Relation between time and temperature.
+      PARAMETER (nrec=88)       !Number of nuclear reactions.
+      PARAMETER (nnuc=26)       !Number of nuclides in calculation.
+      PARAMETER (const1=0.09615) !Relation between time and temperature.
       PARAMETER (const2=6.6700e-8) !Gravitational constant.
+c Julien modified, 28-02-08
+      PARAMETER (nbig=1e7)    !Just a big number, greater than the number
+     |                          ! of lines to be read from the output file
+     |                          ! coming from the other program, so that
+     |                          ! the corresponding arrays have enough space
+c Julien end mod 28-02-08
 
 C-------COMMON AREAS.
       COMMON /rates/  f,r                            !Reaction rates.
@@ -1840,13 +1846,16 @@ C-------COMMON AREAS.
       COMMON /flags/  ltime,is,ip,it,mbad            !Flags,counters.
       COMMON /nupar/  t9mev,tnmev,tnu,cnorm,nu,rhonu !Neutrino parameters.
       COMMON /runopt/ irun,isize,jsize               !Run options.
-
+c Julien modified, 28-02-08
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
+     |     rater,nlines         !Parameters from steriles prog
+c Julien end mod 28-02-08
 
 C=================DECLARATION DIVISION=====================
 
 C-------REACTION RATES.
       REAL    f(nrec)              !Forward reaction rate coefficients.
-	real r(nrec)
+      REAL r(nrec)
 C-------EVOLUTION PARAMETERS.
       REAL    t9                   !Temperature (in units of 10**9 K).
       REAL    hv                   !Defined by hv = M(atomic)n(baryon)/t9**3.
@@ -1899,9 +1908,27 @@ C-------NEUTRINO PARAMETERS.
 C-------RUN OPTION.
       INTEGER isize                !Number of nuclides in computation.
 
-C-------LOCAL VARIABLES.
-      REAL    z                    !Defined by z = m(electron)*c**2/k*t9.
+c Julien modified, 28-02-08
+C------VARIABLES FOR STERILES
+      REAL ts(nbig)             !Time array (in seconds)
+      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
+      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
+      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
+      REAL ratef(nbig)          !Array for the total rate n -> p
+      REAL rater(nbig)          !Array for the total rate p -> n
+      INTEGER nlines            !An integer telling the number of lines
+     |                          ! of data coming from the other program
+c Julien end mod 28-02-08
 
+C-------LOCAL VARIABLES.
+      REAL    z                 !Defined by z = m(electron)*c**2/k*t9.
+
+c Julien modified, 28-02-08
+      REAL tr,xx,HH,t9r,dt9r,rhor,
+     |     r1r,r2r,r3r,r4r,r5r,r6r !Variables used to read the data file
+      REAL t_interp             !This is used to obtain the correct time values
+      CHARACTER trash           !Used to remove the first line from the data
+c Julien end mod 28-02-08
 
 C==================PROCEDURE DIVISION======================
 
@@ -1920,6 +1947,7 @@ C..........COMPUTATIONAL SETTINGS.
       tnu = t9                     !Initial neutrino temperature.
       t   = 1/(const1*t9)**2       !Initial time (Ref 1).
       dt  = dt1                    !Initial time step.
+
 C..........MODEL SETTINGS.
       g   = const2*c(1)            !Modify gravitational constant.
       tau = c(2)                 !Convert n half-life (min) to lifetime (sec).
@@ -1971,6 +1999,53 @@ C50-----SET ABUNDANCES FOR REST OF NUCLIDES----------------------
         y0(i) = y(i)               !Init abundances at beginning of iteration.
       END DO
       CALL rate0                   !Compute weak decay rates.
+
+c Julien modified, 28-02-08 - 05-03-08
+C60----READ OUTPUT FILE FROM OTHER PROGRAM AND SAVE DATA -------
+      open(1,file='s4.dat') !Here give the name of the outputted file
+     |                          ! from the other program
+      read(1,*) nlines          !Get the number of written lines
+      read(1,*) trash           !Remove the second line that are labels
+
+      do i=1,nlines
+         read(1,*) tr,xx,t9r,dt9r,rhor,HH,
+     |              r1r,r2r,r3r,r4r,r5r,r6r
+         ts(i) = tr
+         t9s(i) = t9r
+         dt9s(i) = dt9r
+         rho_tot(i) = rhor
+         ratef(i) = (r1r + r3r + r5r) !Will divide them by tau later on
+         rater(i) = (r2r + r4r + r6r)
+      end do
+c Saves the different used datas from the file into the corresponding
+c  arrays
+      close(1)
+
+      rater = rater / ratef(nlines)
+      ratef = ratef / ratef(nlines)
+c These divisions are for normalisation so that for T->0 (taken to be our
+c  last outputted values), the neutron decay rate (ratef) is equal to 1
+c  (and lated on we'll divide by 1/tau so that this rate is equal to
+c  the real neutron decay rate). Such a normalisation is already done in
+c  the other program so that ratef(nlines) was already nearly equal to 1,
+c  but the previous normalization is not taking into account the change that
+c  could come from adding sterile neutrinos.
+
+      call log_interp_values_d(t_interp, t9, t9s, ts)
+      ts = ts - (t_interp - t)
+c In these 2 lines we do the following: the value from our time ts is
+c  not the same as the one used by Kawano (not same initial time condition)
+c  so we determine how to put our time in agreement with his. First, the
+c  initial time is determined by the initial temperature, so we determine
+c  in our data to which time this initial temperature corresponds (first
+c  line). And then we subtract to our datas the value of the difference
+c  between our time and the one from Kawano, so that at this temperature
+c  we have exactly the same time value.
+c But this time is in fact not really used in our modifications.
+
+c Julien end mod 28-02-08 - 05-03-08
+
+
       RETURN
 
 C-------REFERENCES--------------------------------------
@@ -2023,6 +2098,9 @@ C-------PARAMETERS.
       PARAMETER (nvar=29)          !Number of variables to be evolved.
       PARAMETER (nnuc=26)          !Number of nuclides in calculation.
       PARAMETER (pi=3.141593)
+c Julien modified, 28-02-08
+      PARAMETER (nbig=1e7)
+c Julien end mod 28-02-08
 
 C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y                   !Evolution parameters.
@@ -2035,6 +2113,10 @@ C-------COMMON AREAS.
       COMMON /nucdat/ am(nnuc),zm,dm                 !Nuclide data.
       COMMON /flags/  ltime,is,ip,it,mbad            !Flags,counters.
       COMMON /runopt/ irun,isize,jsize               !Run options.
+c Julien modified, 28-02-08
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
+     |     rater,nlines         !Parameters from steriles prog
+c Julien end mod 28-02-08
 
 
 C=================DECLARATION DIVISION=====================
@@ -2095,8 +2177,24 @@ C-------DERIVATIVES.
       REAL    dlndt9               !(1/h)*d(h)/d(t9).
       REAL    bar                  !Baryon density and pressure terms.
 
+c Julien modified, 28-02-08
+C------VARIABLES FOR STERILES
+      REAL ts(nbig)             !Time array (in seconds)
+      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
+      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
+      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
+      REAL ratef(nbig)          !Array for the total rate n -> p
+      REAL rater(nbig)          !Array for the total rate p -> n
+      INTEGER nlines            !An integer telling the number of lines
+     |                          ! of data coming from the other program
+c Julien end mod 28-02-08
+
+
 C-------LOCAL VARIABLES.
-      INTEGER loop                 !Counts which Runge-Kutta loop.
+      INTEGER loop              !Counts which Runge-Kutta loop.
+c Julien modified, 05-03-08
+      REAL dt9_interp           !The interpolated dt9 value from dt9s
+c Julien end mod 05-03-08
 
 
 C==================PROCEDURE DIVISION======================
@@ -2105,10 +2203,12 @@ C10-----COMPUTE DERIVATIVES FOR ABUNDANCES-----------------------
 
       rnb    = hv*t9*t9*t9/rhob0   !Baryon mass density (ratio to init value).
 C..........VARIOUS THERMODYNAMIC QUANTITIES.
+
       CALL therm
       hubcst = sqrt((8./3.)*pi*g*(thm(10))+(cosmo/3.))  !Expansion rate.
       rhob   = thm(9)             !Baryon mass density.
 C..........COMPUTE REACTION RATE COEFFICIENTS.
+
       CALL rate1(t9)
       GO TO (100,110,120), irun    !Run network selection.
  100  CONTINUE
@@ -2134,7 +2234,7 @@ C..........ACCUMULATE TO GET SUM.
         sumy   = sumy   + y(i)           !Sum of abundance.
         sumzy  = sumzy  + zm(i)*y(i)     !Sum of charge*abundance.
         sumdy  = sumdy  + dydt(i)        !Sum of abundance flow.
-      summdy = summdy + dm(i)*dydt(i)  !Sum of (mass excess)*(abundance flow).
+        summdy = summdy + dm(i)*dydt(i) !Sum of (mass excess)*(abundance flow).
         sumzdy = sumzdy + zm(i)*dydt(i)  !Sum of (charge)*(abundance flow).
       END DO
 C..........CHANGES IN TEMPERATURE, hv, AND CHEMICAL POTENTIAL.
@@ -2146,7 +2246,15 @@ C..........CHANGES IN TEMPERATURE, hv, AND CHEMICAL POTENTIAL.
       dlndt9 = -(thm(2) + thm(5) + thm(6)*dphdt9 + thm(9)*1.388e-4*
      |         sumy)/(thm(1) + thm(3) + thm(4) + thm(7) + thm(9)*bar
      |         + thm(6)*(dphdln + dphdzy*sumzdy/(3.*hubcst)))   !(Ref 1).
-      dt9    = (3.*hubcst)/dlndt9
+
+c Julien modified, 29-02-08 - 05-03-08
+c  was:
+c      dt9    = (3.*hubcst)/dlndt9
+c  we use:
+      call log_interp_values_d(dt9_interp, t9, t9s, dt9s)
+      dt9 = dt9_interp
+c Julien end mod 05-03-08
+
       dlt9dt = dt9/t9
       dhv    = -hv*((3.*hubcst) + 3.*dlt9dt)                    !(Ref 2).
       dphie  = dphdt9*dt9 + dphdln*(3.*hubcst) + dphdzy*sumzdy  !(Ref 3).
@@ -2287,6 +2395,9 @@ C     Computes various temperature dependent thermodynamic quantities.
 C-------PARAMETER.
       PARAMETER (nnuc=26)          !Number of nuclides in calculation.
       PARAMETER (q=2.531)          !(mass(neutron)-mass(proton))/m(electron)
+c Julien modified, 28-02-08
+      PARAMETER (nbig=1e7)
+c Julien end mod 28-02-08
 
 C-------COMMON AREAS.         
       COMMON /evolp1/ t9,hv,phie,y(nnuc)             !Evolution parameters.
@@ -2298,6 +2409,10 @@ C-------COMMON AREAS.
      |                bm1,bm2,bm3,bm4,bm5,           !Eval of function bm(z).
      |                bn1,bn2,bn3,bn4,bn5            !Eval of function bn(z).
       COMMON /nupar/  t9mev,tnmev,tnu,cnorm,nu,rhonu !Integration parameters.
+c Julien modified, 28-02-08
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
+     |     rater,nlines         !Parameters from steriles prog
+c Julien end mod 28-02-08
 
 
 C=================DECLARATION DIVISION=====================
@@ -2331,8 +2446,24 @@ C-------NEUTRINO PARAMETERS.
       REAL    rhonu                !Neutrino energy density.
       INTEGER nu                   !Type of neutrino.
 
+c Julien modified, 28-02-08
+C------VARIABLES FOR STERILES
+      REAL ts(nbig)             !Time array (in seconds)
+      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
+      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
+      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
+      REAL ratef(nbig)          !Array for the total rate n -> p
+      REAL rater(nbig)          !Array for the total rate p -> n
+      INTEGER nlines            !An integer telling the number of lines
+     |                          ! of data coming from the other program
+c Julien end mod 28-02-08
+
 C-------LOCAL VARIABLE.
       REAL    z                    !Defined by z = m(electron)*c**2/k*t9.
+c Julien modified, 28-02-08
+      REAL rho,rate             !Total energy density at given time, and
+     |                          ! rate
+c Julien end mod 28-02-08
 
 
 C==================PROCEDURE DIVISION======================
@@ -2374,7 +2505,6 @@ C..........TRIGNOMETRIC FUNCTION VALUES.
       CALL bessel(z)
 
 C20-----COMPUTE THERMODYNAMIC VARIABLES--------------------------
-
       thm(1)  = 8.418*t9*t9*t9*t9                               !(Ref 1).
       thm(2)  = 4.*thm(1)/t9                                    !(Ref 2).
       thm(3)  = thm(1)/3.                                       !(Ref 3).
@@ -2396,18 +2526,40 @@ C20-----COMPUTE THERMODYNAMIC VARIABLES--------------------------
           thm(8) = thm(8) + 12.79264*rhonu  !Have 12.79264 from units change.
         END DO
       END IF
+c Julien: 29-02-08: Note that I didn't change the neutrino density,
+c  only the total density, so this neutrino density is not totally
+c  the correct one in our case but in the code it is needed only
+c  for the total density, so it doesn't matter
+
       thm(9)  = rhob0*rnb                                       !(Ref 9).
-      thm(10) = thm(1) + thm(4) + thm(8) + thm(9)               !(Ref 10).
+
+c Julien modified, 28-02-08
+c  was:
+c      thm(10) = thm(1) + thm(4) + thm(8) + thm(9)               !(Ref 10).
+c  we use:
+      call log_interp_values_d(rho, t9, t9s, rho_tot)
+      thm(10) = rho + thm(9)                                    !(Ref 10).
+c Julien end mod 28-02-08
+
       thm(11) = -(z**3/t9)*(sinh1*(3.*bl1-z*bm1)-sinh2*(3.*bl2  !(Ref 11).
      |          -2.*z*bm2) + sinh3*(3.*bl3-3.*z*bm3) - sinh4
      |          *(3.*bl4-4.*z*bm4) + sinh5*(3.*bl5-5.*z*bm5))
       thm(12) = z**3*(cosh1*bl1- 2.*cosh2*bl2                   !(Ref 12).
      |          + 3.*cosh3*bl3 - 4.*cosh4*bl4 + 5.*cosh5*bl5)
       IF (thm(12).ne.0.) thm(12) = 1./thm(12)
-      thm(13) = 1.000 + 0.565/z1 - 6.382/z2 + 11.108/z3         !(Ref 13).
-     |          + 36.492/z4 + 27.512/z5
-      thm(14) = (5.252/z1 - 16.229/z2 + 18.059/z3 + 34.181/z4   !(Ref 14).
-     |          + 27.617/z5)*ex(-q*z)
+
+c Julien modified, 28-02-08
+c  was:
+c      thm(13) = 1.000 + 0.565/z1 - 6.382/z2 + 11.108/z3 !(Ref 13).
+c     |          + 36.492/z4 + 27.512/z5
+c      thm(14) = (5.252/z1 - 16.229/z2 + 18.059/z3 + 34.181/z4   !(Ref 14).
+c     |          + 27.617/z5)*ex(-q*z)
+c  we use:
+      call log_interp_values_d(rate, t9, t9s, ratef)
+      thm(13) = rate                                            !(Ref 13).
+      call log_interp_values_d(rate, t9, t9s, rater)
+      thm(14) = rate                                            !(Ref 14).
+c Julien end mod 28-02-08     
 
       RETURN       
 
@@ -3534,6 +3686,16 @@ C==================PROCEDURE DIVISION======================
 
 C10-----COMPUTE WEAK REACTION RATES (NONDEGENERATE)-----------------
 
+c Julien modified, 29-02-08
+c  I added the next 2 lines and inserted a goto command so that we
+c  don't compute the rate in his way but use our values (that we
+c  previously saved in thm(13), thm(14)). The go to command is
+c  jumping to the end of the subroutine
+      f(1)  = thm(13)/tau       !Forward rate for weak np reaction.
+      r(1)  = thm(14)/tau       !Reverse rate for weak np reaction.
+
+      GO TO 10
+
       IF (xi(1).eq.0.) THEN
         f(1)  = thm(13)/tau        !Forward rate for weak np reaction.
         r(1)  = thm(14)/tau        !Reverse rate for weak np reaction.
@@ -3569,6 +3731,10 @@ C..........EVALUATE THE INTEGRALS NUMERICALLY.
         f(1) = part1 + part2       !Add 2 integrals to get forward rate.
         r(1) = part3 + part4       !Add 2 integrals to get reverse rate.
       END IF !(xi(1).eq.0.)
+
+ 10   CONTINUE
+c Julien end mod 29-02-08
+   
       RETURN
 
 C-------REFERENCES--------------------------------------
@@ -4377,13 +4543,13 @@ C-------DEFAULT COMPUTATION PARAMETERS.
       DATA inc0   /30/             !Default accumulation increment.
 
 C--------DEFAULT MODEL PARAMETERS.
-      DATA c0     /1.00,887.,3.0/!Default variation of 3 parameters.
+      DATA c0     /1.00,885.7,3.0/!Default variation of 3 parameters.
       DATA cosmo0 /0.00/           !Default cosmological constant.
       DATA xi0    /0.00,0.00,0.00/ !Default neutrino degeneracy parameter.
 
 C--------DEFAULT VARIATIONAL PARAMETERS.
       DATA dt0    /1.00e-04/       !Default initial time step.
-      DATA eta0   /3.000e-10/      !Default baryon-to-photon ratio.
+      DATA eta0   /6.000e-10/      !Default baryon-to-photon ratio.
 
       END
 
@@ -4596,7 +4762,7 @@ C20-----PRINTINTO FILE------------------------------------
       IF (itime.eq.8) THEN         !Right after a run.
         xout(it,8) = xout(it,8) + xout(it,9)  !Add beryllium to lithium.
         xout(it,5) = xout(it,5) + xout(it,4)  !Add tritium to helium-3.
-        xout(it,6) = xout(it,6)-0.0025  
+        xout(it,6) = xout(it,6)-0.0003  
      |            !Radiative, coulomb, finite-temperature corrections (Ref 1).
         write(3,200) etaout(it),xout(it,3),
      |                xout(it,5),xout(it,6),xout(it,8)  
@@ -4617,3 +4783,162 @@ C        M.S. Turner, Phys. Rev. D., 26,2694 (1982).
 
       END
 
+
+c Julien modified, 28-02-08 - 05-03-08
+C===============IDENTIFICATION DIVISION====================
+
+c-------------TO FIND THE INTERPOLATION INDEX----------------
+
+      SUBROUTINE find_interp_index(index, x_interp, x_values,
+     |     decreasing)
+c This function changes the value of index so that if decreasing is true:
+c  x_values(index) > x_interp >= x_values(index+1);
+c if decreasing is false: x_val(index) <= x_interp < x_val(index+1)
+
+      PARAMETER (nbig=1e7)
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
+     |     rater,nlines         !Parameters from steriles prog
+      INTEGER nlines
+
+      INTEGER index
+      REAL x_interp             !The value where we want to interpolate
+      REAL x_values(nbig)       !The array of the abscissa values
+      LOGICAL decreasing        !This boolean tells if the x-values are
+     |                          ! in decreasing (true) or incr. order
+
+      do j=1,nlines
+         if (decreasing) then   !x_values are decreasing
+            if(x_values(j) <= x_interp) then
+               index = j-1
+               goto 10
+            end if
+         else                   !x_values are increasing
+            if(x_values(j) > x_interp) then
+               intex = j-1
+               goto 10
+            end if
+         end if
+      end do
+ 
+ 10   continue
+
+      END
+
+c-------SUBROUTINES WITH _i and _d FOR FIND_INTERP_INDEX-------
+c These are just so that we don't need to call find_interp... with
+c  the argument true or false to say if the x_values are increasing or
+c  decreasing, but just use _i for increasing and _d for decreasing
+      SUBROUTINE find_interp_index_i(index, x_interp, x_values)
+      call find_interp_index(index,x_interp,x_values,.false.)
+      END
+
+      SUBROUTINE find_interp_index_d(index, x_interp, x_values)
+      call find_interp_index(index,x_interp,x_values,.true.)
+      END
+
+c----------------------------------------------
+
+C-------THE FUNCTIONS DOING AN INTERPOLATION---------------
+
+      SUBROUTINE interp_values(interp_val, x_interp, x_values,
+     |     y_values, decreasing)
+
+      PARAMETER (nbig=1e7)
+      REAL interp_val           !The interpolated y-result
+      REAL x_interp             !The x-value at which interpolation happens
+      REAL x_values(nbig)       !The abscissa discrete values
+      REAL y_values(nbig)       !The array for which we interpolate
+      LOGICAL decreasing        !This boolean tells if the x-values are
+     |                          ! in decreasing (true) or incr. order
+
+      INTEGER interp_index      !The integer giving an x-value just below
+     |                          ! the one to be interpolated
+
+      call find_interp_index(interp_index, x_interp, x_values,
+     |     decreasing)
+
+      y_lo = y_values(interp_index)
+      y_up = y_values(interp_index+1)
+      x_lo = x_values(interp_index)
+      x_up = x_values(interp_index+1)
+      
+      interp_val = ( (x_up-x_interp)*y_lo + (x_interp-x_lo)*y_up )
+     |     / (x_up - x_lo)
+
+      END
+
+C--------FOR A LOGARITHMIC INTERPOLATION---------------------
+c We will usually do an interpolation of the log of the values as these
+c  values are rapidly varying, instead of simply doing a linear interp.
+      SUBROUTINE log_interp_values(interp_val, x_interp, x_values,
+     |     y_values, decreasing)
+
+      PARAMETER (nbig=1e7)
+      REAL interp_val           !The interpolated y-result
+      REAL x_interp             !The x-value at which interpolation happens
+      REAL x_values(nbig)       !The abscissa
+      REAL y_values(nbig)       !The array for which we interpolate
+      LOGICAL decreasing        !This boolean tells if the x-values are
+     |                          ! in decreasing (true) or incr. order
+
+      INTEGER interp_index      !The integer giving an x-value just below
+     |                          ! the one to be interpolated
+      LOGICAL positive          !This tells if the y_values are positive,
+     |                          ! needed when taking the log.
+
+
+      call find_interp_index(interp_index, x_interp, x_values,
+     |     decreasing)
+
+      y_lo = y_values(interp_index)
+      y_up = y_values(interp_index+1)
+
+      if ( y_lo*y_up <= 0 ) then
+c It is not possible to take the log if one of them is 0 or if they
+c  have different signs, so we do a linear interpolation in this case
+         call interp_values(interp_val, x_interp, x_values, y_values,
+     |           decreasing)
+      else
+         positive = .true.
+         if (y_lo < 0) then
+            positive = .false.
+            y_lo = -y_lo        !For negative numbers we take the log
+            y_up = -y_up        ! of their opposite
+         end if
+
+         y_lo = log(y_lo)
+         y_up = log(y_up)
+         x_lo = x_values(interp_index)
+         x_up = x_values(interp_index+1)
+      
+         interp_val = ( (x_up-x_interp)*y_lo + (x_interp-x_lo)*y_up )
+     |        / (x_up - x_lo)
+
+         interp_val = exp(interp_val)
+
+         if (.not.positive) then
+            interp_val = -interp_val
+         end if
+
+      end if
+
+      END
+
+c-------------TWO SUBROUTINES FOR A EASIER USE OF INTERP-------
+c These are just so that we don't need to call log_interp... with
+c  the argument true or false to say if it is increasing or decreasing,
+c  but just use _i for increasing and _d for decreasing
+      SUBROUTINE log_interp_values_i(interp_val, x_interp, x_values,
+     |     y_values)
+      call log_interp_values(interp_val, x_interp, x_values,
+     |     y_values, .false.)
+      END
+c--------------------------
+      SUBROUTINE log_interp_values_d(interp_val, x_interp, x_values,
+     |     y_values)
+      call log_interp_values(interp_val, x_interp, x_values,
+     |     y_values, .true.)
+      END
+
+
+c Julien end mod 28-02-08 - 04-03-08
