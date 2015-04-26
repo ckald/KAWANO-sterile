@@ -1,4 +1,4 @@
- 
+
       PROGRAM nuc123
 
 C----------LINKAGES.
@@ -9,7 +9,7 @@ C----------REMARKS.
 C     Control program -
 C       Offers user the main menu and channels through to various options.
 C     Implementation -
-C       To run this program, NUC123.FOR must be linked with NUCCOM 
+C       To run this program, NUC123.FOR must be linked with NUCCOM
 C       (containing the computation subroutines), NUCRAT (with the
 C       reaction rates), and NUCINT (with an interface subroutine).
 C       This program has been written to be compatible with
@@ -30,6 +30,7 @@ C----------PARAMETERS.
       PARAMETER (iw=1)             !Output unit number.
       PARAMETER (nrec=88)          !Number of nuclear reactions.
       PARAMETER (nnuc=26)          !Number of nuclides in calculation.
+      PARAMETER (nbig=1e7)
 
 C----------COMMON AREAS.
       COMMON /recpr0/ reacpr                        !Reaction parameter values.
@@ -231,7 +232,7 @@ C40--------BRANCH TO APPROPRIATE SECTION--------------------------------
         CALL output
         GO TO 500
  460  CONTINUE                     !Exit section.
-        IF (outfile) THEN 
+        IF (outfile) THEN
           close (unit=2,status='keep')   !Close output file.
         ELSE
           CLOSE (unit=2,status='delete') !File not used - dispose.
@@ -327,7 +328,7 @@ C21--------INTRODUCTION SECTION------------------------------------------
      |          ' ','may wish to put additional code to add t',
      |              'o the computation in an original manner.',10(/),
      |          ' ','(Enter <RETURN> to go back to help menu): ',$)
-        READ (5,*) 
+        READ (5,*)
         GO TO 300
 
 C22--------SET UP RUN SECTION------------------------------------------
@@ -411,7 +412,7 @@ C23--------RUN PROGRAM SECTION------------------------------------------
      |              'e number of nuclides and reactions.  The',/,
      |          ' ','   complete computation takes into accou',
      |              'nt the following nuclides: n, p, d, t,  ',/,
-     |          ' ','   He3, He4, Li6, Li7, Be7, Li8, B8, Be9',    
+     |          ' ','   He3, He4, Li6, Li7, Be7, Li8, B8, Be9',
      |              ',B10, B11, C11, B12, C12, N12, C13, N13,',/,
      |          ' ','   C14, N14, O14, N15, O15, and O16.    ',/,
      |          ' ','   The given CPU percentages and abundan',
@@ -1197,7 +1198,7 @@ C21--------SET RUN NETWORK SECTION--------------------------------------
               jsize = krec
             END IF
           END IF
-        END IF !(irun.eq.1) 
+        END IF !(irun.eq.1)
         print 2104, irun
  2104   FORMAT (' ','Run network set to ',i1,' - Press <RETURN> ',
      |              'to continue: ',$)
@@ -1266,7 +1267,7 @@ C..........OBTAIN QUANTITY TO VARY.
               rnum2(i) = 0.     !Initialize terminal parameter.
               rnum3(i) = 1.     !Initialize incremental parameter.
               inum(i)  = 0      !Initialize selection number.
-            ELSE !((inum(i).ge.1).and.(inum(i).le.8)) 
+            ELSE !((inum(i).ge.1).and.(inum(i).le.8))
 C..........INPUT RUN SPECIFICATIONS.
  231          CONTINUE
               print 2306
@@ -1284,7 +1285,7 @@ C..........INPUT RUN SPECIFICATIONS.
  2312           FORMAT (' ','Zero increment not allowed: trouble with ',
      |                      'dividing by zero')
                 GO TO 232
-              END IF 
+              END IF
               print 2314, rnum1(i), rnum2(i), rnum3(i) !Display input info.
  2314         FORMAT (' ','Run from ',1pe12.5,' to ',1pe12.5,
      |                    ' in increments of ',1pe12.5)
@@ -1293,8 +1294,8 @@ C..........INPUT RUN SPECIFICATIONS.
               READ (5,*) lchose                       !Get confirmation.
  2301         FORMAT (a1)
               IF (lchose.eq.0) GO TO 231
-            END IF !((inum(i).lt.1).or.(inum(i).gt.8)) 
-          END IF !(i.gt.jnum) 
+            END IF !((inum(i).lt.1).or.(inum(i).gt.8))
+          END IF !(i.gt.jnum)
         END DO !i = 1,3
         jnum = jnum-knum           !Number of valid loopings.
         IF (jnum.ne.0) THEN        !Run requested.
@@ -1324,7 +1325,7 @@ C..........DO MULTIPLE RUNS.
             IF ((inum(1).ge.1).and.(inum(1).le.8)) THEN
               IF (inum(1).eq.1) THEN
                 eta1 = 10**rnumb1    !Vary baryon-to-photon ratio.
-              ELSE 
+              ELSE
                 qvary(inum(1)-1) = rnumb1  !Vary other quantities.
               END IF
             END IF
@@ -1333,7 +1334,7 @@ C..........DO MULTIPLE RUNS.
               IF ((inum(2).ge.1).and.(inum(2).le.8)) THEN
                 IF (inum(2).eq.1) THEN
                   eta1 = 10**rnumb2  !Vary baryon-to-photon ratio.
-                ELSE 
+                ELSE
                   qvary(inum(2)-1) = rnumb2  !Vary other quantities.
                 END IF
               END IF
@@ -1342,7 +1343,7 @@ C..........DO MULTIPLE RUNS.
                 IF ((inum(3).ge.1).and.(inum(3).le.8)) THEN
                   IF (inum(3).eq.1) THEN
                     eta1 = 10**rnumb3  !Vary baryon-to-photon ratio.
-                  ELSE 
+                  ELSE
                     qvary(inum(3)-1) = rnumb3  !Vary other quantities.
                   END IF
                 END IF
@@ -1351,15 +1352,15 @@ C..........DO MULTIPLE RUNS.
                 CALL driver        !Do nucleosynthesis computation.
                 itime = 8
                 CALL check       !Check interface subroutine after computation.
-              END DO !lnumb3 = 0,lnum(3)-1  
-            END DO !lnumb2 = 0,lnum(2)-1  
-          END DO !lnumb1 = 0,lnum(1)-1  
+              END DO !lnumb3 = 0,lnum(3)-1
+            END DO !lnumb2 = 0,lnum(2)-1
+          END DO !lnumb1 = 0,lnum(1)-1
           print 2202          !Inform user of completion of computation.
         ELSE !(jnum.eq.0)
           print 2320
  2320     FORMAT (' ','No selection made - ',
-     |                'Press <RETURN> to continue: ',$)   
-        END IF !(jnum.ne.0) 
+     |                'Press <RETURN> to continue: ',$)
+        END IF !(jnum.ne.0)
         READ (5,*)
         GO TO 300
 
@@ -1386,7 +1387,7 @@ C     CALLED BY - [program] nuc123
 C     CALLS     - none
 
 C----------REMARKS.
-C     Outputs computational results either into an output file or onto 
+C     Outputs computational results either into an output file or onto
 C     the screen
 
 C----------PARAMETERS.
@@ -1474,7 +1475,7 @@ c        thmout(j,2) = thmout(j,2)/thmout(j,6)  !Rhoe.
 c        thmout(j,3) = thmout(j,3)/thmout(j,6)  !Rhone.
 c        thmout(j,4) = thmout(j,4)/thmout(j,6)  !Rhob.
 c      END DO
-C..........PRINT CAPTION.         
+C..........PRINT CAPTION.
         nout = nout + 1            !Keep track of number of output requests.
         IF (nout.eq.1) THEN
           write(2,2000)
@@ -1493,7 +1494,7 @@ C..........PRINT CAPTION.
      |          '/  # nu = ',f5.2,'/  lambda = ',1pe10.3,
      |          '/  xi-e = ',e10.3,'/  xi-m = ',e10.3,
      |          '/  xi-t = ',e10.3,/)
-C..........PRINT HEADINGS, ABUNDANCES FOR NEUTRON TO LI8.         
+C..........PRINT HEADINGS, ABUNDANCES FOR NEUTRON TO LI8.
         write(2,2006)
  2006   FORMAT (4x,'Temp',8x,'N/H',10x,'P',10x,'D/H',9x,'T/H',8x,
      |          'He3/H',8x,'He4',8x,'Li6/H',7x,'Li7/H',7x,
@@ -1502,11 +1503,11 @@ C..........PRINT HEADINGS, ABUNDANCES FOR NEUTRON TO LI8.
           write(2,2008) t9out(j),(xout(j,i),i=1,10)
  2008     FORMAT (1pe10.3,1p10e12.3)
         END DO
-C..........PRINT THERMODYNAMIC QUANTITIES.         
+C..........PRINT THERMODYNAMIC QUANTITIES.
         write(2,2010)
  2010   FORMAT (' ',/,4x,'Temp',9x,'T',10x,'rhog',8x,'rhoe',7x,
      |              'rhone',8x,'rhob',8x,'phie',9x,'dt',9x,
-     |              'eta',10x,'H',/,132('-')) 
+     |              'eta',10x,'H',/,132('-'))
         DO j = 1,it
           write(2,2012) t9out(j),tout(j),(thmout(j,i),i=1,5),dtout(j),
      |                   etaout(j),hubout(j)
@@ -1514,7 +1515,7 @@ C..........PRINT THERMODYNAMIC QUANTITIES.
         END DO
         write(2,2014)
  2014   FORMAT (///)
-        outfile = .true.           !Output file requested.      
+        outfile = .true.           !Output file requested.
         print 2016
  2016   FORMAT (' ','Output file requested - Press <RETURN> to ',
      |              'continue: ',$)
@@ -1526,7 +1527,7 @@ C30--------REQUEST OUTPUT ON SCREEN SECTION------------------------------
 C..........RETURN FROM LOOPING.
  300  CONTINUE
 c      DO j = 1,it                  !Temperature in MeV.
-c        t9out(j) = t9out(j)*.08617 
+c        t9out(j) = t9out(j)*.08617
 c      END DO
 c      DO j = 1,it                  !Energy density as fraction of total.
 c        thmout(j,1) = thmout(j,1)/thmout(j,6)  !Rhog.
@@ -1564,7 +1565,7 @@ C..........PRINT CAPTION.
      |                '/ # nu = ',f5.2,'/ lambda = ',1pe10.3,/,
      |            ' ','   xi-e = ',e10.3,'/ xi-m = ',e10.3,
      |                '/ xi-t = ',e10.3,/)
-C..........PRINT HEADINGS, ABUNDANCES FOR D,T,HE3,HE4,LI7.         
+C..........PRINT HEADINGS, ABUNDANCES FOR D,T,HE3,HE4,LI7.
           print 3104
  3104     FORMAT (4x,'Temp',8x,'D/H',9x,'T/H',8x,'He3/H',8x,
      |            'He4',8x,'Li7/H',/,' ',80('-'))
@@ -1616,7 +1617,7 @@ C..........PRINT CAPTION.
           print 2014
           print 3100, cy,ct,t9i,t9f,ytmin
           print 3102, c(1),c(2),c(3),cosmo,xi(1),xi(2),xi(3)
-C..........PRINT THERMODYNAMIC QUANTITIES.         
+C..........PRINT THERMODYNAMIC QUANTITIES.
           print 3404
  3404     FORMAT (4x,'Temp',8x,'time',8x,'phie',9x,'dt',9x,'eta',10x,
      |            'H',/,' ',80('-'))
@@ -1794,10 +1795,10 @@ C..........INCREMENT VALUES.
       GO TO 200
 
 C-------REFERENCES--------------------------------------
-C     1)  Constraint on dt from the requirement that 
+C     1)  Constraint on dt from the requirement that
 C                (d(t9)/dt)*(dt/t9) < ct
 C         Wagoner, R.V. 1969, Ap J. Suppl. No. 162, 18, page 293, equation C6.
-C     2)  Constraint on dt from 
+C     2)  Constraint on dt from
 C                dtl < y/(dy/dt)*cy*(1+(log(y)/log(ytmin))**2)
 C         Wagoner, R.V. 1969, page 293, equation C7 but with log term squared.
 C     3)  Wagoner, R.V. 1969, page 292, equations C1, C2.
@@ -1847,8 +1848,8 @@ C-------COMMON AREAS.
       COMMON /nupar/  t9mev,tnmev,tnu,cnorm,nu,rhonu !Neutrino parameters.
       COMMON /runopt/ irun,isize,jsize               !Run options.
 c Julien modified, 28-02-08
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
-     |     rater,nlines         !Parameters from steriles prog
+      !Parameters from steriles prog
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
 c Julien end mod 28-02-08
 
 C=================DECLARATION DIVISION=====================
@@ -1966,7 +1967,7 @@ C30-----COMPUTE INITIAL ABUNDANCES FOR NEUTRON AND PROTON--------------
         ELSE
           y(1) = 1./(ex(15.011/t9+xi(1))+1.)  !Initial n abundance (Ref 3).
           y(2) = 1./(ex(-15.011/t9-xi(1))+1.) !Initial p abundance (Ref 3).
-        END IF     
+        END IF
       END IF
       IF (xi(1).ne.0.) THEN        !Electron neutrino degeneracy.
         cnorm = 1.
@@ -1989,7 +1990,7 @@ C40-----FIND RATIO OF BARYON DENSITY TO TEMPERATURE CUBED--------------
       IF ((xi(1).eq.0.).and.(xi(2).eq.0.).and.(xi(3).eq.0)) THEN  !Nondegen.
         rhone0 = 7.366*t9**4       !Electron neutrino density (Ref 6).
       END IF
-        
+
 C50-----SET ABUNDANCES FOR REST OF NUCLIDES----------------------
 
       y(3)  = y(1)*y(2)*rhob0*ex(25.82/t9)/(.471e+10*t9**1.5)  !(Ref 7).
@@ -2052,16 +2053,16 @@ C-------REFERENCES--------------------------------------
 C     1) Wagoner, R.V., Fowler, W.A., and Hoyle, F. 1967, Ap. J. 148,
 C          page 44, equation A15.
 C     2) Coulomb correction obtained by dividing by correction factor Fp(t9)
-C               Fp(t9) = 1 - 0.5(pi/(137<v>/c)) 
+C               Fp(t9) = 1 - 0.5(pi/(137<v>/c))
 C          Wagoner, R.V. 1973, Ap. J. 179, page 358.
 C     3) For the nondegenerate case:
 C          Wagoner, R.V., Fowler, W.A., and Hoyle, F. 1967, Ap. J. 148,
 C          page 4, equation 3.
 C        For the case with neutrino degeneracy:
-C          Beaudet,G. and Goret,P., 1976, Astron. & Astrophys., 49, 
+C          Beaudet,G. and Goret,P., 1976, Astron. & Astrophys., 49,
 C          page 417, equation 9.
 C     4) Wagoner, R.V. 1969, Ap J. Suppl. No. 162, 18, page 250, equation 4.
-C          3.3683e+4 = Mu(ng/t9**3) with Mu the atomic mass, ng the 
+C          3.3683e+4 = Mu(ng/t9**3) with Mu the atomic mass, ng the
 C          photon density.  2.75 is for the 11/4 factor difference
 C          between the initial and final values of eta.
 C     5) Kawano, L., 1992, Fermilab preprint FERMILAB-PUB-92/04-A,
@@ -2069,7 +2070,7 @@ C          Kellogg Radiation Lab preprint OAP-714,
 C          equation D.2.
 C     6) Wagoner, R.V., Fowler, W.A., and Hoyle, F. 1967, Ap. J. 148,
 C          page 43, equation A4.
-C          7.366 is used instead of 14.73 as the latter is the sum total 
+C          7.366 is used instead of 14.73 as the latter is the sum total
 C          for 2 neutrino species.
 C     7) Initial deuterium abundance from nuclear statistical equilibrium
 C          Wagoner, R.V., Fowler, W.A., and Hoyle, F. 1967, Ap. J. 148,
@@ -2114,8 +2115,8 @@ C-------COMMON AREAS.
       COMMON /flags/  ltime,is,ip,it,mbad            !Flags,counters.
       COMMON /runopt/ irun,isize,jsize               !Run options.
 c Julien modified, 28-02-08
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
-     |     rater,nlines         !Parameters from steriles prog
+      !Parameters from steriles prog
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
 c Julien end mod 28-02-08
 
 
@@ -2288,7 +2289,7 @@ C-------PARAMETERS.
       PARAMETER (nnuc=26)          !Number of nuclides in calculation.
       PARAMETER (itmax=40)         !Maximum # of lines to be printed.
 
-C-------COMMON AREAS.         
+C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y                   !Evolution parameters.
       COMMON /compr/  cy,ct,t9i,t9f,ytmin,inc        !Computation parameters.
       COMMON /time/   t,dt,dlt9dt                    !Time variables.
@@ -2374,7 +2375,7 @@ C..........RELABEL TEMPERATURE, TIME, THERMODYNAMIC VARIABLES, ETC.
 C20-----INDICATE TERMINATION OF ACCUMULATION IF APPROPRIATE------------
 
       IF ((it.eq.itmax).or.(ip.lt.inc)) ltime = 1
-      RETURN        
+      RETURN
 
       END
 
@@ -2389,7 +2390,7 @@ C     CALLED BY - [subroutine] derivs
 C     CALLS     - [subroutine] bessel, nudens
 C               - [function] ex
 
-C-------REMARKS.         
+C-------REMARKS.
 C     Computes various temperature dependent thermodynamic quantities.
 
 C-------PARAMETER.
@@ -2399,7 +2400,7 @@ c Julien modified, 28-02-08
       PARAMETER (nbig=1e7)
 c Julien end mod 28-02-08
 
-C-------COMMON AREAS.         
+C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y(nnuc)             !Evolution parameters.
       COMMON /compr/  cy,ct,t9i,t9f,ytmin,inc        !Computation parameters.
       COMMON /modpr/  g,tau,xnu,c(3),cosmo,xi        !Model parameters.
@@ -2410,8 +2411,8 @@ C-------COMMON AREAS.
      |                bn1,bn2,bn3,bn4,bn5            !Eval of function bn(z).
       COMMON /nupar/  t9mev,tnmev,tnu,cnorm,nu,rhonu !Integration parameters.
 c Julien modified, 28-02-08
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
-     |     rater,nlines         !Parameters from steriles prog
+      !Parameters from steriles prog
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
 c Julien end mod 28-02-08
 
 
@@ -2484,12 +2485,12 @@ C..........TRIGNOMETRIC FUNCTION VALUES.
         cosh2 = cosh(2.*phie)
         cosh3 = cosh(3.*phie)
         cosh4 = cosh(4.*phie)
-        cosh5 = cosh(5.*phie)   
+        cosh5 = cosh(5.*phie)
         sinh1 = sinh(phie)
         sinh2 = sinh(2.*phie)
         sinh3 = sinh(3.*phie)
         sinh4 = sinh(4.*phie)
-        sinh5 = sinh(5.*phie)   
+        sinh5 = sinh(5.*phie)
       ELSE
         cosh1 = 0.
         cosh2 = 0.
@@ -2513,15 +2514,15 @@ C20-----COMPUTE THERMODYNAMIC VARIABLES--------------------------
       thm(5)  = 3206.*(z/t9)*(bn1*cosh1 - 2.*bn2*cosh2          !(Ref 5).
      |          + 3.*bn3*cosh3 - 4.*bn4*cosh4 + 5.*bn5*cosh5)
       thm(6)  = 3206.*(bm1*sinh1 - 2.*bm2*sinh2 + 3.*bm3*sinh3  !(Ref 6).
-     |          - 4.*bm4*sinh4 + 5.*bm5*sinh5)                  
+     |          - 4.*bm4*sinh4 + 5.*bm5*sinh5)
       thm(7)  = 3206.*(bl1*cosh1/z - bl2*cosh2/(2.*z)           !(Ref 7).
      |          + bl3*cosh3/(3.*z) - bl4*cosh4/(4.*z)
-     |          + bl5*cosh5/(5.*z))                             
+     |          + bl5*cosh5/(5.*z))
       IF ((xi(1).eq.0.).and.(xi(2).eq.0.).and.(xi(3).eq.0)) THEN  !Nondegen.
         thm(8) = xnu*rhone0*(rnb**(4./3.))                      !(Ref 8).
       ELSE                         !Include effects of neutrino degeneracy.
         thm(8) = 0.
-        DO nu = 1,xnu              !For every neutrino family.
+        DO nu = 1, INT(xnu)        !For every neutrino family.
           CALL nudens              !Compute neutrino energy density.
           thm(8) = thm(8) + 12.79264*rhonu  !Have 12.79264 from units change.
         END DO
@@ -2559,9 +2560,9 @@ c  we use:
       thm(13) = rate                                            !(Ref 13).
       call log_interp_values_d(rate, t9, t9s, rater)
       thm(14) = rate                                            !(Ref 14).
-c Julien end mod 28-02-08     
+c Julien end mod 28-02-08
 
-      RETURN       
+      RETURN
 
 C-------REFERENCES AND NOTES-------------------------------
 C     1)  thm(1)  = rho photon
@@ -2572,19 +2573,19 @@ C     3)  thm(3)  = (p photon)/c**2
 C         (Wagoner, R.V., Fowler, W.A., and Hoyle, F. 1967,
 C          page 43, equation A3.)
 C     4)  thm(4)  = rho electron+positron
-C         (Fowler, W.A. and Hoyle, F., 1964, Ap. J. Suppl. No. 91, 9, 
+C         (Fowler, W.A. and Hoyle, F., 1964, Ap. J. Suppl. No. 91, 9,
 C          page 281, equation B44.)
 C     5)  thm(5)  = d(rho electron+positron)/d(t9)
 C     6)  thm(6)  = d(rho electron+positron)/d(phi e)
 C     7)  thm(7)  = (p electron+positron)/c**2
-C         (Fowler, W.A. and Hoyle, F., 1964, Ap. J. Suppl. No. 91, 9, 
+C         (Fowler, W.A. and Hoyle, F., 1964, Ap. J. Suppl. No. 91, 9,
 C          page 279, equation B27.)
 C     8)  thm(8)  = rho neutrino
 C                 = # neutrino species x rho electron neutrino (nondegenerate)
 C                 = rho nu(e) + rho nu(m) + rho nu(t)          (degenerate)
 C     9)  thm(9)  = rho baryon
-C     10) thm(10) = rho total 
-C                 = rho photon + rho electron+positron + rho neutrino 
+C     10) thm(10) = rho total
+C                 = rho photon + rho electron+positron + rho neutrino
 C                              + rho baryon
 C     11) thm(11) = d     /pi**2(hbar*c)**3(ne- - ne+)*z**3\
 C                   d(t9) \  2  (mc**2)**3                 /
@@ -2706,17 +2707,17 @@ C--------VARIABLES TO BE EVALUATED.
 C=====================DATA DIVISION========================
 
 C-------EXPANSION COEFFICIENTS.
-      DATA ci0 / 1., 
-     |           3.5156229,      3.0899424,      1.2067492, 
+      DATA ci0 / 1.,
+     |           3.5156229,      3.0899424,      1.2067492,
      |           0.2659732,      0.0360768,      0.0045813/
-      DATA ci1 / 0.5, 
-     |           0.87890594,     0.51498869,     0.15084934, 
+      DATA ci1 / 0.5,
+     |           0.87890594,     0.51498869,     0.15084934,
      |           0.02658733,     0.00301532,     0.00032411/
-      DATA ck0 /-0.57721566, 
+      DATA ck0 /-0.57721566,
      |           0.42278420,     0.23069756,     0.03488590,
      |           0.00262698,     0.00010750,     0.00000740/
-      DATA ck1 / 1., 
-     |           0.15443144,    -0.67278579,    -0.18156897, 
+      DATA ck1 / 1.,
+     |           0.15443144,    -0.67278579,    -0.18156897,
      |          -0.01919402,    -0.00110404,    -0.00004686/
       DATA c0  / 1.25331414,
      |          -0.07832358,     0.02189568,    -0.01062446,
@@ -2755,14 +2756,14 @@ C..........COMPUTE FACTORS.
         coeff = (ex(-z)/sqrt(z))
 C..........VALUES FOR k0(z) and k1(z).
         bk0 = c0(1)
-        bk1 = c1(1)       
+        bk1 = c1(1)
         DO i = 2,7
           bk0 = bk0 + c0(i)*y**(i-1)
           bk1 = bk1 + c1(i)*y**(i-1)
         END DO
         bk0 = coeff*bk0
         bk1 = coeff*bk1
-      END IF !(z.le.2.) 
+      END IF !(z.le.2.)
 
 C20-----FIND K2, K3, AND K4 BY ITERATION (Ref. 3)-------------------
 
@@ -2850,8 +2851,8 @@ C..........DO INTEGRATION
             rhonu= xintd(0.,uplim1,func5,iter)
      |             + xintd(0.,uplim2,func6,iter)
           END IF
-        END IF !(abs(xi(nu)).ge.30.) 
-      END IF !(abs(xi(nu)).le.0.03) 
+        END IF !(abs(xi(nu)).ge.30.)
+      END IF !(abs(xi(nu)).le.0.03)
 
 
       RETURN
@@ -3016,9 +3017,9 @@ C=====================DATA DIVISION========================
 
 C-------ABSCISSAS AND WEIGHT FACTORS.
       DATA u/-.93246951420315,-.66120938646627,-.23861918608320,
-     |        .23861918608320, .66120938646627, .93246951420315/  
+     |        .23861918608320, .66120938646627, .93246951420315/
       DATA w/.17132449237917,.36076157304814,.46791393457269,
-     |       .46791393457269,.36076157304814,.17132449237917/        
+     |       .46791393457269,.36076157304814,.17132449237917/
       DATA np/6/              !6 point Gaussian integration.
 
 
@@ -3026,7 +3027,7 @@ C==================PROCEDURE DIVISION======================
 
 C10-----DO INTEGRATION-------------------------------------
 
-      sum   = 0.       
+      sum   = 0.
       dist  = (xhi-xlow)/float(nq) !Size of quad interval.
       DO nint = 1,nq
         cent = xlow+(float(nint)-0.5)*dist  !Center of interval.
@@ -3040,9 +3041,9 @@ C10-----DO INTEGRATION-------------------------------------
 C20-----GET INTEGRAL VALUE---------------------------------
 
       xintd = sum*dist*0.5         !Do integral.
-      RETURN        
+      RETURN
 
-      END 
+      END
 
 
 
@@ -3070,7 +3071,7 @@ C==================PROCEDURE DIVISION======================
           ex = exp(x)
         END IF
       END IF
-      RETURN       
+      RETURN
 
 C-------NOTE-----------------------------------------
 C     The overflow limit for the VAX/VMS system is exp(88.029).
@@ -3331,7 +3332,7 @@ C..........FILL L NUCLIDE COLUMN.
           IF (k.le.isize) a(k,l) = a(k,l) +  rk*cl
           a(i,l) = a(i,l) -  ri*cl
           a(l,l) = a(l,l) +  rl*cl
-        END IF !((ind.ne.0).and.(i.le.isize).and.(l.le.isize)) 
+        END IF !((ind.ne.0).and.(i.le.isize).and.(l.le.isize))
       END DO !n = 1,jsize
 
 C40-----PUT A-MATRIX AND B-VECTOR IN FINAL FORM OF MATRIX EQUATION--------
@@ -3386,7 +3387,7 @@ C                  ((rk+rl)*fac(rk)*fac(rl))
 C             cl = rl*(y(k)**rk)*(y(l)**(rl-1)*f(n)/
 C                  ((rk+rl)*fac(rk)*fac(rl))
 C        in which fac(x) is the factorial of x.
-C     2) Form of reverse rate given in 
+C     2) Form of reverse rate given in
 C        Wagoner, R.V.,1969, Ap. J. Suppl. No. 162, 18, 247,
 C          tables 1B, 4B, 7B.
 C     3) Form of reverse rate given in
@@ -3423,7 +3424,7 @@ C-------PARAMETERS.
 
 C-------COMMON AREAS.
       COMMON /compr/  cy,ct,t9i,t9f,ytmin,inc        !Computation parameters.
-      COMMON /lncoef/ a,b,y                          !Lin eqn coefficients. 
+      COMMON /lncoef/ a,b,y                          !Lin eqn coefficients.
       COMMON /flags/  ltime,is,ip,it,mbad            !Flags, counters.
       COMMON /runopt/ irun,isize,jsize               !Run options.
 
@@ -3452,7 +3453,7 @@ C-------LOCAL COMPUTATION VARIABLES.
       DOUBLE PRECISION cx          !Scaling factor in triangularization.
       DOUBLE PRECISION sum         !Sum for backsubstitution.
       REAL   xdy                   !Relative error.
- 
+
 C-------LOCAL COUNTERS.
       INTEGER nord                 !Order of correction.
       INTEGER icnvm                !Convergence monitor.
@@ -3512,7 +3513,7 @@ C30-----DO BACK SUBSTITUTION-------------------------------
         DO j = i+1,isize
           sum = sum + a(i,j)*x(j)  !Sum up all previous terms.
         END DO
-        x(i) = (x(i) - sum)/a(i,i) 
+        x(i) = (x(i) - sum)/a(i,i)
         y(i) = y(i) + x(i)         !Add difference to initial value.
       END DO
 
@@ -3734,7 +3735,7 @@ C..........EVALUATE THE INTEGRALS NUMERICALLY.
 
  10   CONTINUE
 c Julien end mod 29-02-08
-   
+
       RETURN
 
 C-------REFERENCES--------------------------------------
@@ -3934,7 +3935,7 @@ C.......Be7(d,pa)He4...............(Caughlan-Fowler 1988)
 C-------REFERENCES--------------------------------------
 C     Smith, M., Kawano, L.H., and Malaney, R.A., 1992, submitted to Ap. J.
 C     Malaney, R.A., and Fowler, W.A., 1989, Astrophys. J., 345, L5.
-C     Caughlan, G.R., and Fowler, W.A., 1988, Atomic Data and Nuclear Data 
+C     Caughlan, G.R., and Fowler, W.A., 1988, Atomic Data and Nuclear Data
 C       Tables, 40, 283.
 C     Wagoner, R.V.,1969, Ap. J. Suppl. No. 162, 18, 247.
 
@@ -3951,7 +3952,7 @@ C     CALLED BY - [subroutine] derivs
 C     CALLS     - [function] ex
 
 C-------REMARKS.
-C     Generates rate coefficients for reactions involving nuclides 
+C     Generates rate coefficients for reactions involving nuclides
 C     up to A = 18.
 
 C-------PARAMETER.
@@ -4150,7 +4151,7 @@ C.......C11(n,2a)He4...............(Wagoner 1969)
 
 C-------REFERENCES--------------------------------------
 C     Malaney, R.A., and Fowler, W.A., 1989, Astrophys. J., 345, L5.
-C     Caughlan, G.R., and Fowler, W.A., 1988, Atomic Data and Nuclear Data 
+C     Caughlan, G.R., and Fowler, W.A., 1988, Atomic Data and Nuclear Data
 C       Tables, 40, 283.
 C     Wagoner, R.V.,1969, Ap. J. Suppl. No. 162, 18, 247.
 
@@ -4205,7 +4206,7 @@ C10-----TEMPERATURE FACTORS--------------------------------
       t9m32 = 1.0/t932             !t9**(-3/2)
       t9m65 = 1.0/t965             !t9**(-6/5)
       t9a   = t9                   !For reaction 82.
-     |          /(1.+4.78e-2*t9+7.56e-3*t953/(1.+4.78e-2*t9)**(2./3.))  
+     |          /(1.+4.78e-2*t9+7.56e-3*t953/(1.+4.78e-2*t9)**(2./3.))
       t9a13 = t9a**(.33333333)     !t9a**(1/3)
       t9a56 = t9a**(.83333333)     !t9a**(5/6)
       t9b   = t9                   !For reaction 84.
@@ -4355,7 +4356,7 @@ C     Wagoner, R.V.,1969, Ap. J. Suppl. No. 162, 18, 247.
 
 C===============IDENTIFICATION DIVISION====================
 
-      BLOCK DATA   
+      BLOCK DATA
 
 C-------PARAMETERS.
       PARAMETER (nrec=88)          !Number of nuclear reactions.
@@ -4391,7 +4392,7 @@ C-------DEFAULT MODEL PARAMETERS.
 
 C-------DEFAULT VARIATIONAL PARAMETERS.
       REAL    dt0                  !Default initial time step.
-      REAL    eta0                 !Default baryon-to-photon ratio.      
+      REAL    eta0                 !Default baryon-to-photon ratio.
 
 C-------NUCLIDE DATA.
       REAL    am(nnuc)             !Atomic number of nuclide.
@@ -4424,7 +4425,7 @@ C-------REACTION RATE COEFFICIENTS (Ref 1).
       DATA ((reacpr(i,j),j=1,8),i=1,11) /
 C              reac# type n1 n2 n3 n4 rev-coeff q-value
 C              ----  ---- -- -- -- -- ------ -------
-     |             1.,1., 1.,0.,0., 2., 0.0  ,   0.0 ,     !N->P         
+     |             1.,1., 1.,0.,0., 2., 0.0  ,   0.0 ,     !N->P
      |             2.,1., 4.,0.,0., 5., 0.0  ,   0.0 ,     !H3->He3
      |             3.,4.,10.,0.,0., 6., 0.0  ,   0.0 ,     !Li8->2He4
      |             4.,1.,16.,0.,0.,17., 0.0  ,   0.0 ,     !B12->C12
@@ -4488,7 +4489,7 @@ C              ----  ---- -- -- -- -- ------ -------
      |            50.,2., 8.,6.,0.,14., 4.02 , 100.538,    !Li7(a,g)B11
      |            51.,2., 9.,6.,0.,15., 4.02 ,  87.539,    !Be7(a,g)C11
      |            52.,3.,11.,6.,2.,15., 3.08 ,  86.00,     !B8(a,p)C11
-     |            53.,3.,10.,6.,1.,14., 3.07 ,  76.96,     !Li8(a,n)B11   
+     |            53.,3.,10.,6.,1.,14., 3.07 ,  76.96,     !Li8(a,n)B11
      |            54.,3.,12.,6.,1.,17.,10.3  ,  66.160,    !Be9(a,n)C12
      |            55.,3.,12.,3.,1.,13., 2.07 ,  50.63/     !Be9(d,n)B10
       DATA ((reacpr(i,j),j=1,8),i=56,66) /
@@ -4524,15 +4525,15 @@ C              reac# type n1 n2 n3 n4 rev-coeff q-value
 C              ----  ---- -- -- -- -- ------ -------
      |            78.,3.,24.,2.,6.,17., 0.706,  57.623,    !N15(p,a)C12
      |            79.,2.,17.,6.,0.,26., 5.13 ,  83.111,    !C12(a,g)O16
-     |            80.,3.,13.,6.,2.,19., 9.36 ,  47.16,     !B10(a,p)C13  
-     |            81.,3.,14.,6.,2.,21.,11.0  ,   9.098,    !B11(a,p)C14  
-     |            82.,3.,15.,6.,2.,22., 3.68 ,  33.915,    !C11(a,p)N14  
-     |            83.,3.,18.,6.,2.,25., 4.26 , 111.87,     !N12(a,p)O15  
-     |            84.,3.,20.,6.,2.,26., 5.81 ,  60.557,    !N13(a,p)O16  
-     |            85.,3.,13.,6.,1.,20., 9.34 ,  12.287,    !B10(a,n)N13  
-     |            86.,3.,14.,6.,1.,22., 3.67 ,   1.835,    !B11(a,n)N14  
-     |            87.,3.,16.,6.,1.,24., 4.25 ,  88.47,     !B12(a,n)N15  
-     |            88.,3.,19.,6.,1.,26., 5.79 ,  25.711/    !C13(a,n)O16  
+     |            80.,3.,13.,6.,2.,19., 9.36 ,  47.16,     !B10(a,p)C13
+     |            81.,3.,14.,6.,2.,21.,11.0  ,   9.098,    !B11(a,p)C14
+     |            82.,3.,15.,6.,2.,22., 3.68 ,  33.915,    !C11(a,p)N14
+     |            83.,3.,18.,6.,2.,25., 4.26 , 111.87,     !N12(a,p)O15
+     |            84.,3.,20.,6.,2.,26., 5.81 ,  60.557,    !N13(a,p)O16
+     |            85.,3.,13.,6.,1.,20., 9.34 ,  12.287,    !B10(a,n)N13
+     |            86.,3.,14.,6.,1.,22., 3.67 ,   1.835,    !B11(a,n)N14
+     |            87.,3.,16.,6.,1.,24., 4.25 ,  88.47,     !B12(a,n)N15
+     |            88.,3.,19.,6.,1.,26., 5.79 ,  25.711/    !C13(a,n)O16
 
 C-------DEFAULT COMPUTATION PARAMETERS.
       DATA cy0    /.300/           !Default time step limiting constant.
@@ -4561,7 +4562,7 @@ C-------REMARKS.
 C     This is an interface subroutine,
 C     a flexible module which allows user to manipulate physical quantities
 C     of interest at certain key points during the computer run.
-C     Included within this subroutine is a roster of all global variables 
+C     Included within this subroutine is a roster of all global variables
 C     and their respective COMMON areas.
 C     Current instructions accumulate abundances of deuterium, helium-3,
 C     helium-4, and lithium-7 for eventual plotting, taking into account
@@ -4762,10 +4763,10 @@ C20-----PRINTINTO FILE------------------------------------
       IF (itime.eq.8) THEN         !Right after a run.
         xout(it,8) = xout(it,8) + xout(it,9)  !Add beryllium to lithium.
         xout(it,5) = xout(it,5) + xout(it,4)  !Add tritium to helium-3.
-        xout(it,6) = xout(it,6)-0.0003  
+        xout(it,6) = xout(it,6)-0.0003
      |            !Radiative, coulomb, finite-temperature corrections (Ref 1).
         write(3,200) etaout(it),xout(it,3),
-     |                xout(it,5),xout(it,6),xout(it,8)  
+     |                xout(it,5),xout(it,6),xout(it,8)
      |                             !Output eta, H2, He3, He4, and Li7.
  200    FORMAT (5(e13.5,' '))
       END IF
@@ -4795,10 +4796,18 @@ c This function changes the value of index so that if decreasing is true:
 c  x_values(index) > x_interp >= x_values(index+1);
 c if decreasing is false: x_val(index) <= x_interp < x_val(index+1)
 
-      PARAMETER (nbig=1e7)
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,
-     |     rater,nlines         !Parameters from steriles prog
-      INTEGER nlines
+      PARAMETER(nbig=1e7)
+      !Parameters from steriles prog
+      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
+
+      REAL ts(nbig)             !Time array (in seconds)
+      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
+      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
+      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
+      REAL ratef(nbig)          !Array for the total rate n -> p
+      REAL rater(nbig)          !Array for the total rate p -> n
+      INTEGER nlines            !An integer telling the number of lines
+     |                          ! of data coming from the other program
 
       INTEGER index
       REAL x_interp             !The value where we want to interpolate
@@ -4819,7 +4828,7 @@ c if decreasing is false: x_val(index) <= x_interp < x_val(index+1)
             end if
          end if
       end do
- 
+
  10   continue
 
       END
@@ -4829,11 +4838,15 @@ c These are just so that we don't need to call find_interp... with
 c  the argument true or false to say if the x_values are increasing or
 c  decreasing, but just use _i for increasing and _d for decreasing
       SUBROUTINE find_interp_index_i(index, x_interp, x_values)
-      call find_interp_index(index,x_interp,x_values,.false.)
+        COMMON /nbig/ nbig
+        REAL x_values(nbig)       !The abscissa discrete values
+        call find_interp_index(index,x_interp,x_values,.false.)
       END
 
       SUBROUTINE find_interp_index_d(index, x_interp, x_values)
-      call find_interp_index(index,x_interp,x_values,.true.)
+        COMMON /nbig/ nbig
+        REAL x_values(nbig)       !The abscissa discrete values
+        call find_interp_index(index,x_interp,x_values,.true.)
       END
 
 c----------------------------------------------
@@ -4861,7 +4874,7 @@ C-------THE FUNCTIONS DOING AN INTERPOLATION---------------
       y_up = y_values(interp_index+1)
       x_lo = x_values(interp_index)
       x_up = x_values(interp_index+1)
-      
+
       interp_val = ( (x_up-x_interp)*y_lo + (x_interp-x_lo)*y_up )
      |     / (x_up - x_lo)
 
@@ -4910,7 +4923,7 @@ c  have different signs, so we do a linear interpolation in this case
          y_up = log(y_up)
          x_lo = x_values(interp_index)
          x_up = x_values(interp_index+1)
-      
+
          interp_val = ( (x_up-x_interp)*y_lo + (x_interp-x_lo)*y_up )
      |        / (x_up - x_lo)
 
@@ -4930,12 +4943,22 @@ c  the argument true or false to say if it is increasing or decreasing,
 c  but just use _i for increasing and _d for decreasing
       SUBROUTINE log_interp_values_i(interp_val, x_interp, x_values,
      |     y_values)
+      PARAMETER (nbig=1e7)
+      REAL interp_val
+      REAL x_values(nbig)       !The abscissa discrete values
+      REAL y_values(nbig)       !The array for which we interpolate
+
       call log_interp_values(interp_val, x_interp, x_values,
      |     y_values, .false.)
       END
 c--------------------------
       SUBROUTINE log_interp_values_d(interp_val, x_interp, x_values,
      |     y_values)
+      PARAMETER (nbig=1e7)
+      REAL interp_val
+      REAL x_values(nbig)       !The abscissa discrete values
+      REAL y_values(nbig)       !The array for which we interpolate
+
       call log_interp_values(interp_val, x_interp, x_values,
      |     y_values, .true.)
       END
