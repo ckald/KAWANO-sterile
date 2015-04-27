@@ -1,4 +1,51 @@
 
+      MODULE commons
+C----------PARAMETERS.
+        PARAMETER (pi=3.141593)
+        PARAMETER (q=2.531)          !(mass(neutron)-mass(proton))/m(electron)
+        PARAMETER (const1=0.09615) !Relation between time and temperature.
+        PARAMETER (const2=6.6700e-8) !Gravitational constant.
+
+        PARAMETER (ir=1)             !Input unit number.
+        PARAMETER (iw=1)             !Output unit number.
+        PARAMETER (itmax=40)         !Maximum # of line to be printed.
+        PARAMETER (min_time_step=1.e-16)        !Lower limit on size of time step.
+        PARAMETER (iter=50)          !Number of gaussian quads.
+        PARAMETER (eps=2.e-4)        !Tolerance for convergence (.ge. 1.e-7).
+        PARAMETER (mord=1)           !Higher order in correction.
+
+        PARAMETER (nrec=88)          !Number of nuclear reactions.
+        PARAMETER (nnuc=26)          !Number of nuclides in calculation.
+
+        PARAMETER (nvar=29)          !Number of variables to be evolved.
+        PARAMETER (nbig=1e7)    !Just a big number, greater than the number
+     |                          ! of lines to be read from the output file
+     |                          ! coming from the other program, so that
+     |                          ! the corresponding arrays have enough space
+
+        PARAMETER (lrec=64)          !Total # of nuclear reactions for irun = 2.
+        PARAMETER (krec=34)          !Total # of nuclear reactions for irun = 3.
+        PARAMETER (lnuc=18)          !Total # of nuclides for irun = 2.
+        PARAMETER (knuc=9)           !Total # of nuclides for irun = 3.
+
+      END
+
+      MODULE sterile
+        !Parameters from steriles prog
+C------VARIABLES FOR STERILES
+        PARAMETER (n_big=1e7)
+        REAL ts(n_big)             !Time array (in seconds)
+        REAL t9s(n_big)            !Photon temperature array (in 10**9 K)
+        REAL dt9s(n_big)           !Temperature variation (in 10**9 K / s)
+        REAL rho_tot(n_big)        !Total energy density array (in g cm**-3)
+        REAL ratef(n_big)          !Array for the total rate n -> p
+        REAL rater(n_big)          !Array for the total rate p -> n
+        INTEGER nlines            !An integer telling the number of lines
+     |                            ! of data coming from the other program
+      END
+
+
+
       PROGRAM nuc123
 
 C----------LINKAGES.
@@ -25,12 +72,7 @@ C       Kellogg Radiation Lab preprint OAP-714.
 C     Copy -
 C       Version 4.1 (December 1991)
 
-C----------PARAMETERS.
-      PARAMETER (ir=1)             !Input unit number.
-      PARAMETER (iw=1)             !Output unit number.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (nbig=1e7)
+      USE commons
 
 C----------COMMON AREAS.
       COMMON /recpr0/ reacpr                        !Reaction parameter values.
@@ -261,10 +303,7 @@ C     CALLS     - none
 C----------REMARKS.
 C     Displays description and workings of the program.
 
-C----------PARAMETERS.
-      PARAMETER (ir=1)             !Input unit number.
-      PARAMETER (iw=1)             !Output unit number.
-
+      USE commons
 
 C==========================DECLARATION DIVISION===========================
 
@@ -770,9 +809,7 @@ C     CALLS     - none
 C----------REMARKS.
 C     Allows resetting of computation parameters.
 
-C----------PARAMETERS.
-      PARAMETER (ir=1)             !Input unit number.
-      PARAMETER (iw=1)             !Output unit number.
+      USE commons
 
 C----------COMMON AREAS.
       COMMON /compr0/ cy0,ct0,t9i0,t9f0,ytmin0,inc0  !Default comp parameters.
@@ -917,9 +954,7 @@ C     CALLS     - none
 C----------REMARKS.
 C     Allows resetting of model parameters.
 
-C----------PARAMETERS.
-      PARAMETER (ir=1)             !Input unit number.
-      PARAMETER (iw=1)             !Output unit number.
+      USE commons
 
 C----------COMMON AREAS.
       COMMON /modpr0/ c0,cosmo0,xi0                  !Default model parameters.
@@ -1076,15 +1111,7 @@ C     CALLS     - [subroutine] driver
 C----------REMARKS.
 C     Activates computation routine.
 
-C----------PARAMETERS.
-      PARAMETER (ir=1)             !Input unit number.
-      PARAMETER (iw=1)             !Output unit number.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (lrec=64)          !Total # of nuclear reactions for irun = 2.
-      PARAMETER (krec=34)          !Total # of nuclear reactions for irun = 3.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (lnuc=18)          !Total # of nuclides for irun = 2.
-      PARAMETER (knuc=9)           !Total # of nuclides for irun = 3.
+      USE commons
 
 C----------COMMON AREAS.
       COMMON /modpr/  g,tau,xnu,c,cosmo,xi           !Model parameters.
@@ -1390,11 +1417,7 @@ C----------REMARKS.
 C     Outputs computational results either into an output file or onto
 C     the screen
 
-C----------PARAMETERS.
-      PARAMETER (ir=1)             !Input unit number.
-      PARAMETER (iw=1)             !Output unit number.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (itmax=40)         !Maximum # of line to be printed.
+      USE commons
 
 C----------COMMON AREAS.
       COMMON /compr/  cy,ct,t9i,t9f,ytmin,inc        !Computation parameters.
@@ -1658,10 +1681,7 @@ C     CALLS     - [subroutine] start, derivs, accum
 C-------REMARKS.
 C     Runge-Kutta computational routine
 
-C-------PARAMETERS.
-      PARAMETER (nvar=29)          !Number of variables to be evolved.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (cl=1.e-16)        !Lower limit on size of time step.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y                   !Evolution parameters.
@@ -1745,7 +1765,7 @@ C..........COMPUTE DERIVATIVES OF VARIABLES TO BE EVOLVED.
       CALL check                   !Check interface subroutine.
 C..........ACCUMULATE.
       IF ((t9.le.t9f).or.                         !Low temp.
-     |    (dt.lt.abs(cl/dlt9dt)).or.              !Small dt.
+     |    (dt.lt.abs(min_time_step/dlt9dt)).or.   !Small dt.
      |    (ip.eq.inc)) CALL accum                 !Enough iterations.
 C..........POSSIBLY TERMINATE COMPUTATION.
       IF (ltime.eq.1) THEN         !Return to run selection.
@@ -1819,17 +1839,8 @@ C               - [function] ex
 C-------REMARKS.
 C     Sets initial conditions.
 
-C-------PARAMETERS.
-      PARAMETER (nrec=88)       !Number of nuclear reactions.
-      PARAMETER (nnuc=26)       !Number of nuclides in calculation.
-      PARAMETER (const1=0.09615) !Relation between time and temperature.
-      PARAMETER (const2=6.6700e-8) !Gravitational constant.
-c Julien modified, 28-02-08
-      PARAMETER (nbig=1e7)    !Just a big number, greater than the number
-     |                          ! of lines to be read from the output file
-     |                          ! coming from the other program, so that
-     |                          ! the corresponding arrays have enough space
-c Julien end mod 28-02-08
+      USE commons
+      USE sterile
 
 C-------COMMON AREAS.
       COMMON /rates/  f,r                            !Reaction rates.
@@ -1847,10 +1858,6 @@ C-------COMMON AREAS.
       COMMON /flags/  ltime,is,ip,it,mbad            !Flags,counters.
       COMMON /nupar/  t9mev,tnmev,tnu,cnorm,nu,rhonu !Neutrino parameters.
       COMMON /runopt/ irun,isize,jsize               !Run options.
-c Julien modified, 28-02-08
-      !Parameters from steriles prog
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
-c Julien end mod 28-02-08
 
 C=================DECLARATION DIVISION=====================
 
@@ -1908,18 +1915,6 @@ C-------NEUTRINO PARAMETERS.
 
 C-------RUN OPTION.
       INTEGER isize                !Number of nuclides in computation.
-
-c Julien modified, 28-02-08
-C------VARIABLES FOR STERILES
-      REAL ts(nbig)             !Time array (in seconds)
-      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
-      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
-      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
-      REAL ratef(nbig)          !Array for the total rate n -> p
-      REAL rater(nbig)          !Array for the total rate p -> n
-      INTEGER nlines            !An integer telling the number of lines
-     |                          ! of data coming from the other program
-c Julien end mod 28-02-08
 
 C-------LOCAL VARIABLES.
       REAL    z                 !Defined by z = m(electron)*c**2/k*t9.
@@ -2095,13 +2090,8 @@ C       - hv
 C       - Chemical potential
 C       - abundances
 
-C-------PARAMETERS.
-      PARAMETER (nvar=29)          !Number of variables to be evolved.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (pi=3.141593)
-c Julien modified, 28-02-08
-      PARAMETER (nbig=1e7)
-c Julien end mod 28-02-08
+      USE commons
+      USE sterile
 
 C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y                   !Evolution parameters.
@@ -2114,10 +2104,6 @@ C-------COMMON AREAS.
       COMMON /nucdat/ am(nnuc),zm,dm                 !Nuclide data.
       COMMON /flags/  ltime,is,ip,it,mbad            !Flags,counters.
       COMMON /runopt/ irun,isize,jsize               !Run options.
-c Julien modified, 28-02-08
-      !Parameters from steriles prog
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
-c Julien end mod 28-02-08
 
 
 C=================DECLARATION DIVISION=====================
@@ -2177,19 +2163,6 @@ C-------DERIVATIVES.
       REAL    dphdzy               !d(phi e)/d(sumzy).
       REAL    dlndt9               !(1/h)*d(h)/d(t9).
       REAL    bar                  !Baryon density and pressure terms.
-
-c Julien modified, 28-02-08
-C------VARIABLES FOR STERILES
-      REAL ts(nbig)             !Time array (in seconds)
-      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
-      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
-      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
-      REAL ratef(nbig)          !Array for the total rate n -> p
-      REAL rater(nbig)          !Array for the total rate p -> n
-      INTEGER nlines            !An integer telling the number of lines
-     |                          ! of data coming from the other program
-c Julien end mod 28-02-08
-
 
 C-------LOCAL VARIABLES.
       INTEGER loop              !Counts which Runge-Kutta loop.
@@ -2284,10 +2257,7 @@ C     CALLS     - none
 C-------REMARKS.
 C     Output accumulator.
 
-C-------PARAMETERS.
-      PARAMETER (nvar=29)          !Number of variables to be evolved.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (itmax=40)         !Maximum # of lines to be printed.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y                   !Evolution parameters.
@@ -2393,12 +2363,8 @@ C               - [function] ex
 C-------REMARKS.
 C     Computes various temperature dependent thermodynamic quantities.
 
-C-------PARAMETER.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (q=2.531)          !(mass(neutron)-mass(proton))/m(electron)
-c Julien modified, 28-02-08
-      PARAMETER (nbig=1e7)
-c Julien end mod 28-02-08
+      USE commons
+      USE sterile
 
 C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y(nnuc)             !Evolution parameters.
@@ -2410,10 +2376,6 @@ C-------COMMON AREAS.
      |                bm1,bm2,bm3,bm4,bm5,           !Eval of function bm(z).
      |                bn1,bn2,bn3,bn4,bn5            !Eval of function bn(z).
       COMMON /nupar/  t9mev,tnmev,tnu,cnorm,nu,rhonu !Integration parameters.
-c Julien modified, 28-02-08
-      !Parameters from steriles prog
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
-c Julien end mod 28-02-08
 
 
 C=================DECLARATION DIVISION=====================
@@ -2446,18 +2408,6 @@ C-------NEUTRINO PARAMETERS.
       REAL    tnu                  !Neutrino temperature.
       REAL    rhonu                !Neutrino energy density.
       INTEGER nu                   !Type of neutrino.
-
-c Julien modified, 28-02-08
-C------VARIABLES FOR STERILES
-      REAL ts(nbig)             !Time array (in seconds)
-      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
-      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
-      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
-      REAL ratef(nbig)          !Array for the total rate n -> p
-      REAL rater(nbig)          !Array for the total rate p -> n
-      INTEGER nlines            !An integer telling the number of lines
-     |                          ! of data coming from the other program
-c Julien end mod 28-02-08
 
 C-------LOCAL VARIABLE.
       REAL    z                    !Defined by z = m(electron)*c**2/k*t9.
@@ -2798,9 +2748,6 @@ C     CALLS     - [function] xintd, eval
 C-------REMARKS.
 C     Computes energy density contribution from neutrinos.
 
-C-------PARAMTER.
-      PARAMETER (iter=50)          !Number of gaussian quads.
-
 C-------COMMON AREAS.
       COMMON /modpr/  g,tau,xnu,c(3),cosmo,xi        !Model parameters.
       COMMON /nupar/  t9mev,tnmev,tnu,cnorm,nu,rhonu !Integration parameters.
@@ -3094,11 +3041,7 @@ C-------REMARKS.
 C     Computes reverse strong and electromagnetic reaction rates.
 C     Fills and solves matrix equation for dydt(i).
 
-C-------PARAMETERS.
-      PARAMETER (ir=1)             !Input unit number.
-      PARAMETER (iw=1)             !Output unit number.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
+      USE commons
 
 C--------COMMON AREAS.
       COMMON /recpr/  iform,ii,jj,kk,ll,rev,q9     !Reaction parameters names.
@@ -3417,10 +3360,7 @@ C-------REMARKS.
 C     Solves for new abundances using gaussian elimination
 C     with back substitution, no pivoting.
 
-C-------PARAMETERS.
-      PARAMETER (nnuc=26)          !Rank of matrix.
-      PARAMETER (mord=1)           !Higher order in correction.
-      PARAMETER (eps=2.e-4)        !Tolerance for convergence (.ge. 1.e-7).
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /compr/  cy,ct,t9i,t9f,ytmin,inc        !Computation parameters.
@@ -3566,8 +3506,7 @@ C     CALLS     - none
 C-------REMARKS.
 C     Generates weak decay rates.
 
-C-------PARAMETER.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
+      USE commons
 
 C-------COMMON AREA.
       COMMON /rates/  f,r(nrec)    !Reaction rates.
@@ -3636,9 +3575,7 @@ C     CALLS     - [function] xintd, eval
 C-------REMARKS.
 C     Generates rate coefficients for weak n->p and p->n reactions.
 
-C-------PARAMETERS.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (iter=50)          !Number of gaussian quads.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /rates/  f,r                            !Reaction rates.
@@ -3762,9 +3699,7 @@ C-------REMARKS.
 C     Generates rate coefficients for reactions involving nuclides
 C     up to A = 9.
 
-C-------PARAMETER.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /rates/  f,r(nrec)           !Reaction rates.
@@ -3955,9 +3890,7 @@ C-------REMARKS.
 C     Generates rate coefficients for reactions involving nuclides
 C     up to A = 18.
 
-C-------PARAMETER.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /rates/  f,r(nrec)           !Reaction rates.
@@ -4170,9 +4103,7 @@ C     CALLS     - [function] ex
 C-------REMARKS.
 C     Generates rate coefficients for rest of reactions.
 
-C-------PARAMETER.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /rates/  f,r(nrec)           !Reaction rates.
@@ -4358,9 +4289,7 @@ C===============IDENTIFICATION DIVISION====================
 
       BLOCK DATA
 
-C-------PARAMETERS.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /recpr0/ reacpr                         !Reaction parameter values.
@@ -4568,11 +4497,7 @@ C     Current instructions accumulate abundances of deuterium, helium-3,
 C     helium-4, and lithium-7 for eventual plotting, taking into account
 C     the contribution of beryllium-7 to lithium-7 and tritium to helium-3.
 
-C-------PARAMETERS.
-      PARAMETER (nrec=88)          !Number of nuclear reactions.
-      PARAMETER (nvar=29)          !Number of variables to be evolved.
-      PARAMETER (nnuc=26)          !Number of nuclides in calculation.
-      PARAMETER (itmax=40)         !Maximum # of lines to be printed.
+      USE commons
 
 C-------COMMON AREAS.
       COMMON /recpr0/ reacpr                       !Reaction parameter values.
@@ -4796,18 +4721,8 @@ c This function changes the value of index so that if decreasing is true:
 c  x_values(index) > x_interp >= x_values(index+1);
 c if decreasing is false: x_val(index) <= x_interp < x_val(index+1)
 
-      PARAMETER(nbig=1e7)
-      !Parameters from steriles prog
-      COMMON /ster/ ts,t9s,dt9s,rho_tot,ratef,rater,nlines
-
-      REAL ts(nbig)             !Time array (in seconds)
-      REAL t9s(nbig)            !Photon temperature array (in 10**9 K)
-      REAL dt9s(nbig)           !Temperature variation (in 10**9 K / s)
-      REAL rho_tot(nbig)        !Total energy density array (in g cm**-3)
-      REAL ratef(nbig)          !Array for the total rate n -> p
-      REAL rater(nbig)          !Array for the total rate p -> n
-      INTEGER nlines            !An integer telling the number of lines
-     |                          ! of data coming from the other program
+      USE commons
+      USE sterile
 
       INTEGER index
       REAL x_interp             !The value where we want to interpolate
@@ -4838,13 +4753,13 @@ c These are just so that we don't need to call find_interp... with
 c  the argument true or false to say if the x_values are increasing or
 c  decreasing, but just use _i for increasing and _d for decreasing
       SUBROUTINE find_interp_index_i(index, x_interp, x_values)
-        COMMON /nbig/ nbig
+        USE commons
         REAL x_values(nbig)       !The abscissa discrete values
         call find_interp_index(index,x_interp,x_values,.false.)
       END
 
       SUBROUTINE find_interp_index_d(index, x_interp, x_values)
-        COMMON /nbig/ nbig
+        USE commons
         REAL x_values(nbig)       !The abscissa discrete values
         call find_interp_index(index,x_interp,x_values,.true.)
       END
@@ -4856,7 +4771,7 @@ C-------THE FUNCTIONS DOING AN INTERPOLATION---------------
       SUBROUTINE interp_values(interp_val, x_interp, x_values,
      |     y_values, decreasing)
 
-      PARAMETER (nbig=1e7)
+      USE commons
       REAL interp_val           !The interpolated y-result
       REAL x_interp             !The x-value at which interpolation happens
       REAL x_values(nbig)       !The abscissa discrete values
@@ -4886,7 +4801,7 @@ c  values are rapidly varying, instead of simply doing a linear interp.
       SUBROUTINE log_interp_values(interp_val, x_interp, x_values,
      |     y_values, decreasing)
 
-      PARAMETER (nbig=1e7)
+      USE commons
       REAL interp_val           !The interpolated y-result
       REAL x_interp             !The x-value at which interpolation happens
       REAL x_values(nbig)       !The abscissa
@@ -4943,7 +4858,7 @@ c  the argument true or false to say if it is increasing or decreasing,
 c  but just use _i for increasing and _d for decreasing
       SUBROUTINE log_interp_values_i(interp_val, x_interp, x_values,
      |     y_values)
-      PARAMETER (nbig=1e7)
+      USE commons
       REAL interp_val
       REAL x_values(nbig)       !The abscissa discrete values
       REAL y_values(nbig)       !The array for which we interpolate
@@ -4954,7 +4869,7 @@ c  but just use _i for increasing and _d for decreasing
 c--------------------------
       SUBROUTINE log_interp_values_d(interp_val, x_interp, x_values,
      |     y_values)
-      PARAMETER (nbig=1e7)
+      USE commons
       REAL interp_val
       REAL x_values(nbig)       !The abscissa discrete values
       REAL y_values(nbig)       !The array for which we interpolate
