@@ -18,10 +18,6 @@ C----------PARAMETERS.
         PARAMETER (nnuc=26)          !Number of nuclides in calculation.
 
         PARAMETER (nvar=29)          !Number of variables to be evolved.
-        PARAMETER (nbig=1e7)    !Just a big number, greater than the number
-     |                          ! of lines to be read from the output file
-     |                          ! coming from the other program, so that
-     |                          ! the corresponding arrays have enough space
 
         PARAMETER (lrec=64)          !Total # of nuclear reactions for irun = 2.
         PARAMETER (krec=34)          !Total # of nuclear reactions for irun = 3.
@@ -2027,7 +2023,7 @@ c  the other program so that ratef(nlines) was already nearly equal to 1,
 c  but the previous normalization is not taking into account the change that
 c  could come from adding sterile neutrinos.
 
-      call log_interp_values_d(t_interp, t9, t9s, ts)
+      call log_interp_values(t_interp, t9, t9s, ts, .true., nlines)
       ts = ts - (t_interp - t)
 c In these 2 lines we do the following: the value from our time ts is
 c  not the same as the one used by Kawano (not same initial time condition)
@@ -2225,7 +2221,7 @@ c Julien modified, 29-02-08 - 05-03-08
 c  was:
 c      dt9    = (3.*hubcst)/dlndt9
 c  we use:
-      call log_interp_values_d(dt9_interp, t9, t9s, dt9s)
+      call log_interp_values(dt9_interp, t9, t9s, dt9s, .true., nlines)
       dt9 = dt9_interp
 c Julien end mod 05-03-08
 
@@ -2426,9 +2422,9 @@ C10-----COMPUTE FACTORS------------------------------------
 C..........FACTORS OF z.
       z1 = z
       z2 = z*z
-      z3 = z*z*z
-      z4 = z*z*z*z
-      z5 = z*z*z*z*z
+      z3 = z2*z
+      z4 = z3*z
+      z5 = z4*z
 C..........TRIGNOMETRIC FUNCTION VALUES.
       IF (phie.le.17.) THEN        !No chance of overflow.
         cosh1 = cosh(phie)
@@ -2488,7 +2484,7 @@ c Julien modified, 28-02-08
 c  was:
 c      thm(10) = thm(1) + thm(4) + thm(8) + thm(9)               !(Ref 10).
 c  we use:
-      call log_interp_values_d(rho, t9, t9s, rho_tot)
+      call log_interp_values(rho, t9, t9s, rho_tot, .true., nlines)
       thm(10) = rho + thm(9)                                    !(Ref 10).
 c Julien end mod 28-02-08
 
@@ -2506,9 +2502,9 @@ c     |          + 36.492/z4 + 27.512/z5
 c      thm(14) = (5.252/z1 - 16.229/z2 + 18.059/z3 + 34.181/z4   !(Ref 14).
 c     |          + 27.617/z5)*ex(-q*z)
 c  we use:
-      call log_interp_values_d(rate, t9, t9s, ratef)
+      call log_interp_values(rate, t9, t9s, ratef, .true., nlines)
       thm(13) = rate                                            !(Ref 13).
-      call log_interp_values_d(rate, t9, t9s, rater)
+      call log_interp_values(rate, t9, t9s, rater, .true., nlines)
       thm(14) = rate                                            !(Ref 14).
 c Julien end mod 28-02-08
 
@@ -3624,54 +3620,8 @@ C==================PROCEDURE DIVISION======================
 
 C10-----COMPUTE WEAK REACTION RATES (NONDEGENERATE)-----------------
 
-c Julien modified, 29-02-08
-c  I added the next 2 lines and inserted a goto command so that we
-c  don't compute the rate in his way but use our values (that we
-c  previously saved in thm(13), thm(14)). The go to command is
-c  jumping to the end of the subroutine
       f(1)  = thm(13)/tau       !Forward rate for weak np reaction.
       r(1)  = thm(14)/tau       !Reverse rate for weak np reaction.
-
-      GO TO 10
-
-      IF (xi(1).eq.0.) THEN
-        f(1)  = thm(13)/tau        !Forward rate for weak np reaction.
-        r(1)  = thm(14)/tau        !Reverse rate for weak np reaction.
-      ELSE
-
-C20-----COMPUTE WEAK REACTION RATES (DEGENERATE)--------------------
-
-        t9mev = tph*.086171        !Convert photon temp to units of MeV.
-        tnmev = tnu*.086171        !Convert neutrino temp to units of MeV.
-C..........COMPUTE OVERFLOW LIMITS FOR LIMITS OF INTEGRATION (Ref 1 & 2).
-        w(1) = (-(t9mev/.511)*(-88.722))
-        w(2) = ((tnmev/.511)*(88.029+xi(1))+2.531)
-        x(1) = ((t9mev/.511)*(88.029))
-        x(2) = (-(tnmev/.511)*(-88.722+xi(1))-2.531)
-        y(1) = (-(t9mev/.511)*(-88.722))
-        y(2) = ((tnmev/.511)*(88.029-xi(1))-2.531)
-        z(1) = ((t9mev/.511)*(88.029))
-        z(2) = (-(tnmev/.511)*(-88.722-xi(1))+2.531)
-C..........COMPARE LIMITS AND TAKE LARGER OF THE TWO.
-        uplim1 = abs(w(1))
-        uplim2 = abs(x(1))
-        uplim3 = abs(y(1))
-        uplim4 = abs(z(1))
-        IF (uplim1.lt.abs(w(2))) uplim1 = w(2)
-        IF (uplim2.lt.abs(x(2))) uplim2 = x(2)
-        IF (uplim3.lt.abs(y(2))) uplim3 = y(2)
-        IF (uplim4.lt.abs(z(2))) uplim4 = z(2)
-C..........EVALUATE THE INTEGRALS NUMERICALLY.
-        part1 = xintd(1.,uplim1,func1,iter)
-        part2 = xintd(1.,uplim2,func2,iter)
-        part3 = xintd(1.,uplim3,func3,iter)
-        part4 = xintd(1.,uplim4,func4,iter)
-        f(1) = part1 + part2       !Add 2 integrals to get forward rate.
-        r(1) = part3 + part4       !Add 2 integrals to get reverse rate.
-      END IF !(xi(1).eq.0.)
-
- 10   CONTINUE
-c Julien end mod 29-02-08
 
       RETURN
 
@@ -4709,174 +4659,3 @@ C        M.S. Turner, Phys. Rev. D., 26,2694 (1982).
 
       END
 
-
-c Julien modified, 28-02-08 - 05-03-08
-C===============IDENTIFICATION DIVISION====================
-
-c-------------TO FIND THE INTERPOLATION INDEX----------------
-
-      SUBROUTINE find_interp_index(index, x_interp, x_values,
-     |     decreasing)
-c This function changes the value of index so that if decreasing is true:
-c  x_values(index) > x_interp >= x_values(index+1);
-c if decreasing is false: x_val(index) <= x_interp < x_val(index+1)
-
-      USE commons
-      USE sterile
-
-      INTEGER index
-      REAL x_interp             !The value where we want to interpolate
-      REAL x_values(nbig)       !The array of the abscissa values
-      LOGICAL decreasing        !This boolean tells if the x-values are
-     |                          ! in decreasing (true) or incr. order
-
-      do j=1,nlines
-         if (decreasing) then   !x_values are decreasing
-            if(x_values(j) <= x_interp) then
-               index = j-1
-               goto 10
-            end if
-         else                   !x_values are increasing
-            if(x_values(j) > x_interp) then
-               intex = j-1
-               goto 10
-            end if
-         end if
-      end do
-
- 10   continue
-
-      END
-
-c-------SUBROUTINES WITH _i and _d FOR FIND_INTERP_INDEX-------
-c These are just so that we don't need to call find_interp... with
-c  the argument true or false to say if the x_values are increasing or
-c  decreasing, but just use _i for increasing and _d for decreasing
-      SUBROUTINE find_interp_index_i(index, x_interp, x_values)
-        USE commons
-        REAL x_values(nbig)       !The abscissa discrete values
-        call find_interp_index(index,x_interp,x_values,.false.)
-      END
-
-      SUBROUTINE find_interp_index_d(index, x_interp, x_values)
-        USE commons
-        REAL x_values(nbig)       !The abscissa discrete values
-        call find_interp_index(index,x_interp,x_values,.true.)
-      END
-
-c----------------------------------------------
-
-C-------THE FUNCTIONS DOING AN INTERPOLATION---------------
-
-      SUBROUTINE interp_values(interp_val, x_interp, x_values,
-     |     y_values, decreasing)
-
-      USE commons
-      REAL interp_val           !The interpolated y-result
-      REAL x_interp             !The x-value at which interpolation happens
-      REAL x_values(nbig)       !The abscissa discrete values
-      REAL y_values(nbig)       !The array for which we interpolate
-      LOGICAL decreasing        !This boolean tells if the x-values are
-     |                          ! in decreasing (true) or incr. order
-
-      INTEGER interp_index      !The integer giving an x-value just below
-     |                          ! the one to be interpolated
-
-      call find_interp_index(interp_index, x_interp, x_values,
-     |     decreasing)
-
-      y_lo = y_values(interp_index)
-      y_up = y_values(interp_index+1)
-      x_lo = x_values(interp_index)
-      x_up = x_values(interp_index+1)
-
-      interp_val = ( (x_up-x_interp)*y_lo + (x_interp-x_lo)*y_up )
-     |     / (x_up - x_lo)
-
-      END
-
-C--------FOR A LOGARITHMIC INTERPOLATION---------------------
-c We will usually do an interpolation of the log of the values as these
-c  values are rapidly varying, instead of simply doing a linear interp.
-      SUBROUTINE log_interp_values(interp_val, x_interp, x_values,
-     |     y_values, decreasing)
-
-      USE commons
-      REAL interp_val           !The interpolated y-result
-      REAL x_interp             !The x-value at which interpolation happens
-      REAL x_values(nbig)       !The abscissa
-      REAL y_values(nbig)       !The array for which we interpolate
-      LOGICAL decreasing        !This boolean tells if the x-values are
-     |                          ! in decreasing (true) or incr. order
-
-      INTEGER interp_index      !The integer giving an x-value just below
-     |                          ! the one to be interpolated
-      LOGICAL positive          !This tells if the y_values are positive,
-     |                          ! needed when taking the log.
-
-
-      call find_interp_index(interp_index, x_interp, x_values,
-     |     decreasing)
-
-      y_lo = y_values(interp_index)
-      y_up = y_values(interp_index+1)
-
-      if ( y_lo*y_up <= 0 ) then
-c It is not possible to take the log if one of them is 0 or if they
-c  have different signs, so we do a linear interpolation in this case
-         call interp_values(interp_val, x_interp, x_values, y_values,
-     |           decreasing)
-      else
-         positive = .true.
-         if (y_lo < 0) then
-            positive = .false.
-            y_lo = -y_lo        !For negative numbers we take the log
-            y_up = -y_up        ! of their opposite
-         end if
-
-         y_lo = log(y_lo)
-         y_up = log(y_up)
-         x_lo = x_values(interp_index)
-         x_up = x_values(interp_index+1)
-
-         interp_val = ( (x_up-x_interp)*y_lo + (x_interp-x_lo)*y_up )
-     |        / (x_up - x_lo)
-
-         interp_val = exp(interp_val)
-
-         if (.not.positive) then
-            interp_val = -interp_val
-         end if
-
-      end if
-
-      END
-
-c-------------TWO SUBROUTINES FOR A EASIER USE OF INTERP-------
-c These are just so that we don't need to call log_interp... with
-c  the argument true or false to say if it is increasing or decreasing,
-c  but just use _i for increasing and _d for decreasing
-      SUBROUTINE log_interp_values_i(interp_val, x_interp, x_values,
-     |     y_values)
-      USE commons
-      REAL interp_val
-      REAL x_values(nbig)       !The abscissa discrete values
-      REAL y_values(nbig)       !The array for which we interpolate
-
-      call log_interp_values(interp_val, x_interp, x_values,
-     |     y_values, .false.)
-      END
-c--------------------------
-      SUBROUTINE log_interp_values_d(interp_val, x_interp, x_values,
-     |     y_values)
-      USE commons
-      REAL interp_val
-      REAL x_values(nbig)       !The abscissa discrete values
-      REAL y_values(nbig)       !The array for which we interpolate
-
-      call log_interp_values(interp_val, x_interp, x_values,
-     |     y_values, .true.)
-      END
-
-
-c Julien end mod 28-02-08 - 04-03-08
