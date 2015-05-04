@@ -2757,8 +2757,8 @@ C=================DECLARATION DIVISION=====================
 
 C-------MODEL PARAMETERS.
       REAL    xi(3)                !Neutrino degeneracy parameters.
-	real func5
-	real func6
+	REAL func5
+	REAL func6
 
 C-------NEUTRINO PARAMETERS.
       REAL    tnu                  !Neutrino temperature (units of 10**9 K).
@@ -3088,7 +3088,7 @@ C-------ENERGY DENSITIES.
       REAL    rhob                 !Baryon mass density.
 
 C-------COMPONENTS OF MATRIX EQUATION.
-      DOUBLE PRECISION a(nnuc,nnuc)!Relates y(t-dt) to y(t).
+      REAL a(nnuc,nnuc) !Relates y(t-dt) to y(t).
       REAL    b(nnuc)              !Contains y0 in inverse order.
       REAL    yx(nnuc)             !yy in reverse order.
 
@@ -3281,7 +3281,7 @@ C40-----PUT A-MATRIX AND B-VECTOR IN FINAL FORM OF MATRIX EQUATION--------
         i1 = isize1 - i            !Invert the rows.
         DO j = 1,isize
           j1 = isize1 - j          !Invert the columns.
-          IF (dabs(a(j,i)).lt.bdln*y0(j1)/y0(i1)) THEN
+          IF (ABS(a(j,i)).lt.bdln*y0(j1)/y0(i1)) THEN
             a(j,i) = 0.d0          !Set 0 if tiny.
           ELSE
             a(j,i) = a(j,i)*dt     !Bring dt over to other side.
@@ -3371,7 +3371,7 @@ C-------COMPUTATION PARAMETER.
       INTEGER inc                  !Accumulation increment.
 
 C-------MATRIX COEFFICIENTS FOR LINEAR EQUATION.
-      DOUBLE PRECISION a(nnuc,nnuc)!Coefficient array.
+      REAL a(nnuc,nnuc)!Coefficient array.
       REAL    b(nnuc)              !Right-hand vector w/o manipulation.
       REAL    y(nnuc)              !Solution vector.
 
@@ -3382,12 +3382,12 @@ C-------RUN OPTION.
       INTEGER isize                !Number of nuclides in computation.
 
 C-------LOCAL MATRICES AND VECTORS.
-      DOUBLE PRECISION a0(nnuc,nnuc)!Coefficient array w/o manipulation.
-      DOUBLE PRECISION x(nnuc)     !Right-hand vector.
+      REAL a0(nnuc,nnuc)!Coefficient array w/o manipulation.
+      REAL x(nnuc)     !Right-hand vector.
 
 C-------LOCAL COMPUTATION VARIABLES.
-      DOUBLE PRECISION cx          !Scaling factor in triangularization.
-      DOUBLE PRECISION sum         !Sum for backsubstitution.
+      REAL cx          !Scaling factor in triangularization.
+      REAL sum         !Sum for backsubstitution.
       REAL   xdy                   !Relative error.
 
 C-------LOCAL COUNTERS.
@@ -3458,7 +3458,7 @@ C40-----TESTS AND EXITS------------------------------------
       IF (icnvm.eq.inc) THEN
         DO i = 1,isize
           IF (y(i).ne.0.) THEN
-            xdy = dabs(x(i)/y(i))  !Relative error.
+            xdy = ABS(x(i)/y(i))  !Relative error.
             IF (xdy.gt.eps) THEN
               IF (nord.lt.mord) THEN !Continue to higher orders.
                 nord = nord + 1
@@ -4571,7 +4571,7 @@ C-------ENERGY DENSITIES.
       REAL    rnb                !Baryon energy density (ratio to init value).
 
 C-------MATRIX COEFFICIENTS FOR LINEAR EQUATION.
-      DOUBLE PRECISION a(nnuc,nnuc)!Relates y(t+dt) to y(t).
+      REAL a(nnuc,nnuc)!Relates y(t+dt) to y(t).
       REAL    b(nnuc)              !Contains y0 in inverse order.
       REAL    yx(nnuc)             !yy in reverse order.
 
