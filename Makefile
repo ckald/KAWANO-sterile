@@ -1,12 +1,18 @@
-FLAGS = -fdefault-real-8 -fno-align-commons
+# https://gcc.gnu.org/onlinedocs/gfortran/Fortran-Dialect-Options.html
 
-all: clean python kawano
+FLAGS = -freal-4-real-8 -fno-align-commons -Ofast
+
+all: clean python kawano test
 
 python:
-	f2py -c -m interpolation interpolation.f90
+	f2py -c -m interpolation interpolation.f90 --f90flags="$(FLAGS)"
 
 kawano:
-	gfortran kawano_steriles.f interpolation.f90 $(FLAGS)
+	gfortran kawano_steriles.f newint.f nuccom.f nucrat.f interpolation.f90 $(FLAGS) -o kawano
 
 clean:
-	rm -rf *.o *.so *.mod *.out
+	rm -rf *.o *.so *.mod
+
+test:
+	pip install -U pytest
+	py.test -v
