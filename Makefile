@@ -11,7 +11,7 @@ kawano:
 	gfortran kawano_steriles.f newint.f nuccom.f nucrat.f interpolation.f90 $(FLAGS) -o kawano
 
 clean:
-	rm -rf *.o *.so *.mod
+	rm -f *.o *.so *.mod kawano
 
 test:
 	pip install -U pytest
