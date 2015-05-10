@@ -254,6 +254,8 @@ c Julien modified, 28-02-08
       CHARACTER trash           !Used to remove the first line from the data
 c Julien end mod 28-02-08
 
+      CHARACTER(255) :: input_file
+
 C==================PROCEDURE DIVISION======================
 
 C10-----INITIALIZE FLAGS AND COUNTERS-------------------------
@@ -326,7 +328,12 @@ C50-----SET ABUNDANCES FOR REST OF NUCLIDES----------------------
 
 c Julien modified, 28-02-08 - 05-03-08
 C60----READ OUTPUT FILE FROM OTHER PROGRAM AND SAVE DATA -------
-      open(1,file='s4.dat') !Here give the name of the outputted file
+      CALL GETENV("KAWANO_INPUT", input_file)
+      input_file = TRIM(input_file)
+      IF (input_file == '') THEN
+        input_file = 's4.dat'
+      END IF
+      open(1,file=input_file) !Here give the name of the outputted file
      |                          ! from the other program
       read(1,*) nlines          !Get the number of written lines
       read(1,*) trash           !Remove the second line that are labels
