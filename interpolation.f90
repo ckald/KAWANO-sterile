@@ -93,20 +93,40 @@ SUBROUTINE interp_values(interp_val, x_interp, x_values, y_values, decreasing, s
   INTEGER head, tail
   !The integer giving an x-value just below the one to be interpolated
 
-  DOUBLE PRECISION :: x_lo, x_up, y_lo, y_up
+  DOUBLE PRECISION :: x_lo, x_up
+  DOUBLE PRECISION :: y0, y1, y2, y3
+  DOUBLE PRECISION :: a0, a1, a2, a3, mu
 
   CALL binary_search(head, tail, x_interp, x_values, size, decreasing)
 
-  IF (head /= tail) THEN
-
-    y_lo = y_values(head)
-    y_up = y_values(tail)
-    x_lo = x_values(head)
-    x_up = x_values(tail)
-
-    interp_val = ( (x_up-x_interp)*y_lo + (x_interp-x_lo)*y_up ) / (x_up - x_lo)
-  ELSE
+  IF (head == tail) THEN
     interp_val = y_values(head)
+  ELSE
+
+    IF (head == 1 .OR. tail == size) THEN
+      ! If the value lies near the end of the interpolated region, use simple linear interpolation
+      x_lo = x_values(head)
+      x_up = x_values(tail)
+
+      interp_val = ( (x_up-x_interp)*y_values(head) + (x_interp-x_lo)*y_values(tail) ) / (x_up - x_lo)
+
+    ELSE
+      ! Otherwise, use cubic interpolation
+      y0 = y_values(head - 1)
+      y1 = y_values(head)
+      y2 = y_values(tail)
+      y3 = y_values(tail + 1)
+
+      a0 = -0.5*y0 + 1.5*y1 - 1.5*y2 + 0.5*y3;
+      a1 = y0 - 2.5*y1 + 2*y2 - 0.5*y3;
+      a2 = -0.5*y0 + 0.5*y2;
+      a3 = y1;
+
+      mu = (x_interp - x_values(head)) / (x_values(tail) - x_values(head))
+
+      interp_val = a0*mu*mu*mu + a1*mu*mu + a2*mu + a3
+
+    END IF
   END IF
 
 END SUBROUTINE

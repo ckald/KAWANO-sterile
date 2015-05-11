@@ -59,16 +59,16 @@ def test_binary_search_reversed():
     assert binary_search(98, haystack, decreasing=True) == (1, 1)
 
 
-def test_linear_interpolation():
+# def test_linear_interpolation():
 
-    xs = [0, 1, 2, 3, 4]
-    ys = [0, 0, 1, 0, 5]
+#     xs = [0, 1, 2, 3, 4]
+#     ys = [0, 0, 1, 0, 5]
 
-    assert ys == [interp_values(x, xs, ys) for x in xs]
-    assert 0 == interp_values(0.5, xs, ys)
-    assert 0.5 == interp_values(1.5, xs, ys) == interp_values(2.5, xs, ys)
+#     assert ys == [interp_values(x, xs, ys) for x in xs]
+#     assert 0 == interp_values(0.5, xs, ys)
+#     assert 0.5 == interp_values(1.5, xs, ys) == interp_values(2.5, xs, ys)
 
-    assert abs(4 - interp_values(3.8, xs, ys)) < 10 * float_info.epsilon
+#     assert abs(4 - interp_values(3.8, xs, ys)) < 10 * float_info.epsilon
 
 
 def test_logarithmic_interpolation():
