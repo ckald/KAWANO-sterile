@@ -254,6 +254,7 @@ c Julien modified, 28-02-08
       CHARACTER trash           !Used to remove the first line from the data
 c Julien end mod 28-02-08
 
+      INTEGER :: e
       CHARACTER(255) :: input_file
 
 C==================PROCEDURE DIVISION======================
@@ -328,29 +329,33 @@ C50-----SET ABUNDANCES FOR REST OF NUCLIDES----------------------
 
 c Julien modified, 28-02-08 - 05-03-08
 C60----READ OUTPUT FILE FROM OTHER PROGRAM AND SAVE DATA -------
-      CALL GETENV("KAWANO_INPUT", input_file)
+
+      CALL GETENV("INPUT", input_file)
       input_file = TRIM(input_file)
       IF (input_file == '') THEN
         input_file = 's4.dat'
       END IF
-      open(1,file=input_file) !Here give the name of the outputted file
-     |                          ! from the other program
-      read(1,*) nlines          !Get the number of written lines
-      read(1,*) trash           !Remove the second line that are labels
+      OPEN(1,file=input_file, status='old') !Here give the name of the outputted file
+     |                        ! from the other program
+      READ(1,*, IOSTAT=e) trash !Get the number of written lines
+      IF (e == 0) THEN
+        READ(1,*) trash           !Remove the second line that are labels
+      END IF
 
-      do i=1,nlines
-         read(1,*) tr,xx,t9r,dt9r,rhor,HH,
-     |              r1r,r2r,r3r,r4r,r5r,r6r
-         ts(i) = tr
-         t9s(i) = t9r
-         dt9s(i) = dt9r
-         rho_tot(i) = rhor
-         ratef(i) = (r1r + r3r + r5r) !Will divide them by tau later on
-         rater(i) = (r2r + r4r + r6r)
-      end do
+      nlines=0
+      DO
+        READ(1,*,end=10) tr,xx,t9r,dt9r,rhor,HH,r1r,r2r,r3r,r4r,r5r,r6r
+        nlines=nlines + 1
+        ts(nlines) = tr
+        t9s(nlines) = t9r
+        dt9s(nlines) = dt9r
+        rho_tot(nlines) = rhor
+        ratef(nlines) = (r1r + r3r + r5r) !Will divide them by tau later on
+        rater(nlines) = (r2r + r4r + r6r)
+      END DO
 c Saves the different used datas from the file into the corresponding
 c  arrays
-      close(1)
+10    CLOSE(1)
 
       rater = rater / ratef(nlines)
       ratef = ratef / ratef(nlines)
