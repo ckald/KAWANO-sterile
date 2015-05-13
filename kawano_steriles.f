@@ -154,12 +154,20 @@ C----------OUTPUT FILE STATUS.
 C----------USER RESPONSE VARIABLES.
       INTEGER inum                 !Selection number.
 
+      CHARACTER(255) :: output_file
+
 
 C===========================PROCEDURE DIVISION=====================
 
 C--------OPEN FILES AND PRINT GREETING-----------------------------
 
-      OPEN (unit=2, file='nuc123.dat', status='unknown')  !Output file.
+      CALL GETENV("OUTPUT", output_file)
+      output_file = TRIM(output_file)
+      IF (output_file == '') THEN
+        output_file = 'nuc123.dat'
+      END IF
+
+      OPEN (unit=2, file=output_file, status='unknown')  !Output file.
       itime = 1                    !Time = beginning of program.
       CALL check                   !Check interface subroutine.
       PRINT 1000
