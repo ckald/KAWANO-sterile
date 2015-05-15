@@ -24,6 +24,8 @@ C----------PARAMETERS.
         PARAMETER (lnuc=18)          !Total # of nuclides for irun = 2.
         PARAMETER (knuc=9)           !Total # of nuclides for irun = 3.
 
+        CHARACTER(255) :: output_file
+
       END
 
       MODULE sterile
@@ -153,9 +155,6 @@ C----------OUTPUT FILE STATUS.
 
 C----------USER RESPONSE VARIABLES.
       INTEGER inum                 !Selection number.
-
-      CHARACTER(255) :: output_file
-
 
 C===========================PROCEDURE DIVISION=====================
 
@@ -1493,6 +1492,8 @@ C..........BRANCH TO APPROPRIATE SECTION.
 C20--------REQUEST OUTPUT SECTION--------------------------------------
 
  200  CONTINUE
+        PRINT *, 'Saving output to: ', output_file
+
 c      DO j = 1,it                  !Temperature in MeV.
 c        t9out(j) = t9out(j)*.08617
 c      END DO

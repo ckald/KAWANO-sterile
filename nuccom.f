@@ -335,6 +335,7 @@ C60----READ OUTPUT FILE FROM OTHER PROGRAM AND SAVE DATA -------
       IF (input_file == '') THEN
         input_file = 's4.dat'
       END IF
+      PRINT *, 'Reading custom data from: ', input_file
       OPEN(1,file=input_file, status='old') !Here give the name of the outputted file
      |                        ! from the other program
       READ(1,*, IOSTAT=e) trash !Get the number of written lines
