@@ -4377,13 +4377,13 @@ C-------DEFAULT COMPUTATION PARAMETERS.
       DATA inc0   /30/             !Default accumulation increment.
 
 C--------DEFAULT MODEL PARAMETERS.
-      DATA c0     /1.00,887.,3.0/!Default variation of 3 parameters.
+      DATA c0     /1.00,885.7,3.0/!Default variation of 3 parameters.
       DATA cosmo0 /0.00/           !Default cosmological constant.
       DATA xi0    /0.00,0.00,0.00/ !Default neutrino degeneracy parameter.
 
 C--------DEFAULT VARIATIONAL PARAMETERS.
       DATA dt0    /1.00e-04/       !Default initial time step.
-      DATA eta0   /3.000e-10/      !Default baryon-to-photon ratio.
+      DATA eta0   /6.000e-10/      !Default baryon-to-photon ratio.
 
       END
 
@@ -4596,7 +4596,7 @@ C20-----PRINTINTO FILE------------------------------------
       IF (itime.eq.8) THEN         !Right after a run.
         xout(it,8) = xout(it,8) + xout(it,9)  !Add beryllium to lithium.
         xout(it,5) = xout(it,5) + xout(it,4)  !Add tritium to helium-3.
-        xout(it,6) = xout(it,6)-0.0025
+        xout(it,6) = xout(it,6)-0.0003
      |            !Radiative, coulomb, finite-temperature corrections (Ref 1).
         write(3,200) etaout(it),xout(it,3),
      |                xout(it,5),xout(it,6),xout(it,8)
