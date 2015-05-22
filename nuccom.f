@@ -10,6 +10,7 @@ C-------REMARKS.
 C     Runge-Kutta computational routine
 
       USE commons
+      USE sterile
 
 C-------COMMON AREAS.
       COMMON /evolp1/ t9,hv,phie,y                   !Evolution parameters.
@@ -70,6 +71,8 @@ C-------LABELS FOR VARIABLES TO BE TIME EVOLVED.
       DOUBLE PRECISION    dvdt(nvar)           !Time derivatives.
       DOUBLE PRECISION    v0(nvar)             !Value of variables at original point.
       DOUBLE PRECISION    dvdt0(nvar)          !Value of derivatives at original point.
+
+      DOUBLE PRECISION    h_interp
 
 C-------EQUIVALENCE STATEMENTS.
       EQUIVALENCE (v(4),y(1)),(dvdt(4),dydt(1)),(v0(4),y0(1))
@@ -139,6 +142,9 @@ C..........INCREMENT VALUES.
         v(i) = v0(i) + .5*(dvdt(i)+dvdt0(i))*dt
         IF ((i.ge.4).and.(v(i).lt.ytmin)) v(i) = ytmin  !Set at minimum value.
       END DO
+
+      CALL log_interp_values(h_interp, t9, t9s, hvs, .true., nlines)
+      v(2) = h_interp
 
       GO TO 200
 
@@ -252,6 +258,7 @@ c Julien modified, 28-02-08
      |     r1r,r2r,r3r,r4r,r5r,r6r !Variables used to read the data file
       DOUBLE PRECISION t_interp             !This is used to obtain the correct time values
       CHARACTER trash           !Used to remove the first line from the data
+      DOUBLE PRECISION aT
 c Julien end mod 28-02-08
 
       INTEGER :: e
@@ -305,27 +312,6 @@ C30-----COMPUTE INITIAL ABUNDANCES FOR NEUTRON AND PROTON--------------
       y0(1) = y(1)
       y0(2) = y(2)
 
-C40-----FIND RATIO OF BARYON DENSITY TO TEMPERATURE CUBED--------------
-
-      z      = 5.930/t9            !Inverse of temperature.
-      CALL bessel(z)
-      hv     = 3.3683e+4*eta1*2.75 !(Ref 4 but with final eta).
-      phie   = hv*(1.784e-5*y(2))  !Chemical potential of electron (Ref 5).
-     |            /(.5*z**3*(bl1-2.*bl2+3.*bl3-4.*bl4+5.*bl5))
-      rhob0  = hv*t9**3            !Baryon density.
-      IF ((xi(1).eq.0.).and.(xi(2).eq.0.).and.(xi(3).eq.0)) THEN  !Nondegen.
-        rhone0 = 7.366*t9**4       !Electron neutrino density (Ref 6).
-      END IF
-
-C50-----SET ABUNDANCES FOR REST OF NUCLIDES----------------------
-
-      y(3)  = y(1)*y(2)*rhob0*ex(25.82/t9)/(.471e+10*t9**1.5)  !(Ref 7).
-      y0(3) = y(3)
-      DO i = 4,isize
-        y(i)  = ytmin              !Set rest to minimum abundance.
-        y0(i) = y(i)               !Init abundances at beginning of iteration.
-      END DO
-      CALL rate0                   !Compute weak decay rates.
 
 c Julien modified, 28-02-08 - 05-03-08
 C60----READ OUTPUT FILE FROM OTHER PROGRAM AND SAVE DATA -------
@@ -353,10 +339,16 @@ C60----READ OUTPUT FILE FROM OTHER PROGRAM AND SAVE DATA -------
         rho_tot(nlines) = rhor
         ratef(nlines) = (r1r + r3r + r5r) !Will divide them by tau later on
         rater(nlines) = (r2r + r4r + r6r)
+	aTs(nlines) = xx*t9r
+	hvs(nlines) =  1. / aTs(nlines)**3
       END DO
 c Saves the different used datas from the file into the corresponding
 c  arrays
 10    CLOSE(1)
+
+      hvs = 3.3683e+4 * eta1 * hvs * aTs(nlines)**3
+      !hvs = 3.3683e+4 * 4.75e-10 * hvs * aTs(nlines)**3
+      !aT = aTs(nlines) / aTs(1)
 
       rater = rater / ratef(nlines)
       ratef = ratef / ratef(nlines)
@@ -368,7 +360,7 @@ c  the other program so that ratef(nlines) was already nearly equal to 1,
 c  but the previous normalization is not taking into account the change that
 c  could come from adding sterile neutrinos.
 
-      call log_interp_values(t_interp, t9, t9s, ts, .true., nlines)
+      CALL log_interp_values(t_interp, t9, t9s, ts, .true., nlines)
       ts = ts - (t_interp - t)
 c In these 2 lines we do the following: the value from our time ts is
 c  not the same as the one used by Kawano (not same initial time condition)
@@ -381,6 +373,30 @@ c  we have exactly the same time value.
 c But this time is in fact not really used in our modifications.
 
 c Julien end mod 28-02-08 - 05-03-08
+
+
+C40-----FIND RATIO OF BARYON DENSITY TO TEMPERATURE CUBED--------------
+
+      z      = 5.930/t9            !Inverse of temperature.
+      CALL bessel(z)
+      !hv     = 3.3683e+4*eta1*aT**3 !(Ref 4 but with final
+      hv = hvs(1) 
+      phie   = hv*(1.784e-5*y(2))  !Chemical potential of electron (Ref 5).
+     |            /(.5*z**3*(bl1-2.*bl2+3.*bl3-4.*bl4+5.*bl5))
+      rhob0  = hv*t9**3            !Baryon density.
+      IF ((xi(1).eq.0.).and.(xi(2).eq.0.).and.(xi(3).eq.0)) THEN  !Nondegen.
+        rhone0 = 7.366*t9**4       !Electron neutrino density (Ref 6).
+      END IF
+
+C50-----SET ABUNDANCES FOR REST OF NUCLIDES----------------------
+
+      y(3)  = y(1)*y(2)*rhob0*ex(25.82/t9)/(.471e+10*t9**1.5)  !(Ref 7).
+      y0(3) = y(3)
+      DO i = 4,isize
+        y(i)  = ytmin              !Set rest to minimum abundance.
+        y0(i) = y(i)               !Init abundances at beginning of iteration.
+      END DO
+      CALL rate0                   !Compute weak decay rates.
 
 
       RETURN
@@ -566,7 +582,7 @@ c Julien modified, 29-02-08 - 05-03-08
 c  was:
 c      dt9    = (3.*hubcst)/dlndt9
 c  we use:
-      call log_interp_values(dt9_interp, t9, t9s, dt9s, .true., nlines)
+      CALL log_interp_values(dt9_interp, t9, t9s, dt9s, .true., nlines)
       dt9 = dt9_interp
 c Julien end mod 05-03-08
 
@@ -829,7 +845,7 @@ c Julien modified, 28-02-08
 c  was:
 c      thm(10) = thm(1) + thm(4) + thm(8) + thm(9)               !(Ref 10).
 c  we use:
-      call log_interp_values(rho, t9, t9s, rho_tot, .true., nlines)
+      CALL log_interp_values(rho, t9, t9s, rho_tot, .true., nlines)
       thm(10) = rho + thm(9)                                    !(Ref 10).
 c Julien end mod 28-02-08
 
@@ -847,9 +863,9 @@ c     |          + 36.492/z4 + 27.512/z5
 c      thm(14) = (5.252/z1 - 16.229/z2 + 18.059/z3 + 34.181/z4   !(Ref 14).
 c     |          + 27.617/z5)*ex(-q*z)
 c  we use:
-      call log_interp_values(rate, t9, t9s, ratef, .true., nlines)
+      CALL log_interp_values(rate, t9, t9s, ratef, .true., nlines)
       thm(13) = rate                                            !(Ref 13).
-      call log_interp_values(rate, t9, t9s, rater, .true., nlines)
+      CALL log_interp_values(rate, t9, t9s, rater, .true., nlines)
       thm(14) = rate                                            !(Ref 14).
 c Julien end mod 28-02-08
 

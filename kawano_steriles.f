@@ -33,11 +33,13 @@ C----------PARAMETERS.
 C------VARIABLES FOR STERILES
         PARAMETER (n_big=1e7)
         DOUBLE PRECISION ts(n_big)             !Time array (in seconds)
+	DOUBLE PRECISION aTs(n_big)
         DOUBLE PRECISION t9s(n_big)            !Photon temperature array (in 10**9 K)
         DOUBLE PRECISION dt9s(n_big)           !Temperature variation (in 10**9 K / s)
         DOUBLE PRECISION rho_tot(n_big)        !Total energy density array (in g cm**-3)
         DOUBLE PRECISION ratef(n_big)          !Array for the total rate n -> p
         DOUBLE PRECISION rater(n_big)          !Array for the total rate p -> n
+	DOUBLE PRECISION hvs(n_big)
         INTEGER nlines            !An integer telling the number of lines
      |                            ! of data coming from the other program
       END
