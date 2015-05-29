@@ -279,14 +279,14 @@ C40--------BRANCH TO APPROPRIATE SECTION--------------------------------
         CALL output
         GO TO 500
  460  CONTINUE                     !Exit section.
+ccccccccccc  CLOSE (unit=1)             !End terminal session.
+        itime = 10                 !Time = end of program.
+        CALL check                 !Check interface subroutine.
         IF (outfile) THEN
           close (unit=2,status='keep')   !Close output file.
         ELSE
           CLOSE (unit=2,status='delete') !File not used - dispose.
         END IF
-ccccccccccc  CLOSE (unit=1)             !End terminal session.
-        itime = 10                 !Time = end of program.
-        CALL check                 !Check interface subroutine.
         STOP
 
 C50---------GO BACK TO MENU-----------------------------------------

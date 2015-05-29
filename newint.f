@@ -186,6 +186,8 @@ C-------RUN OPTION.
 C-------OUTPUT FILE STATUS.
       INTEGER nout                 !Number of output requests.
       LOGICAL outfile              !Indicates if output file used.
+      INTEGER outunit
+      DOUBLE PRECISION    shout(itmax,nnuc)     !Nuclide mass fractions.
 
 
 C==================PROCEDURE DIVISION======================
@@ -198,21 +200,35 @@ C10-----OPEN FILE---------------------------------------
 
 C20-----PRINTINTO FILE------------------------------------
 
-      IF (itime.eq.8) THEN         !Right after a run.
-        xout(it,8) = xout(it,8) + xout(it,9)  !Add beryllium to lithium.
-        xout(it,5) = xout(it,5) + xout(it,4)  !Add tritium to helium-3.
-        xout(it,6) = xout(it,6)-0.0003
+      IF (itime.eq.8 .or. itime.eq.10) THEN         !Right after a run.
+
+        IF (outfile) THEN
+          outunit = 2
+        ELSE
+          outunit = 3
+        END IF
+
+        shout = xout
+        shout(it,8) = shout(it,8) + shout(it,9)  !Add beryllium to lithium.
+        shout(it,5) = shout(it,5) + shout(it,4)  !Add tritium to helium-3.
+        shout(it,6) = shout(it,6)-0.0003
      |            !Radiative, coulomb, finite-temperature corrections (Ref 1).
-        write(3,200) etaout(it),xout(it,3),
-     |                xout(it,5),xout(it,6),xout(it,8)
+        write(outunit,199) "", "eta", "D", "He3", "He4", "Li7"
+ 199    FORMAT(6(A13, ' '))
+        write(outunit,200) "Observables:", etaout(it),shout(it,3),
+     |                shout(it,5),shout(it,6),shout(it,8)
      |                             !Output eta, H2, He3, He4, and Li7.
- 200    FORMAT (5(e13.5,' '))
+ 200    FORMAT (A13, ' ', 5(e13.5,' '))
       END IF
 
 C30-----close FILE--------------------------------------
 
       IF (itime.eq.10) THEN        !End of program.
-        CLOSE (unit=3)
+        IF (outfile) THEN
+          CLOSE (unit=3, status='delete')
+        ELSE
+          CLOSE (unit=3, status='keep')
+        END IF
       END IF
       RETURN
 
