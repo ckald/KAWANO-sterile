@@ -380,7 +380,8 @@ C40-----FIND RATIO OF BARYON DENSITY TO TEMPERATURE CUBED--------------
       z      = 5.930/t9            !Inverse of temperature.
       CALL bessel(z)
       !hv     = 3.3683e+4*eta1*aT**3 !(Ref 4 but with final
-      hv = hvs(1) 
+      !hv = hvs(1) 
+      CALL log_interp_values(hv, t9, t9s, hvs, .true., nlines)
       phie   = hv*(1.784e-5*y(2))  !Chemical potential of electron (Ref 5).
      |            /(.5*z**3*(bl1-2.*bl2+3.*bl3-4.*bl4+5.*bl5))
       rhob0  = hv*t9**3            !Baryon density.
