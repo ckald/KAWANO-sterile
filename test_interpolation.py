@@ -77,10 +77,10 @@ def test_logarithmic_interpolation():
         return math.exp(-math.pi*x)
 
     xs = range(-5, 5)
-    ys = map(f, xs)
+    ys = list(map(f, xs))
 
     xxs = [x / 5. for x in range(-25, 21)]
-    yys = map(f, xxs)
+    yys = list(map(f, xxs))
 
     assert [abs(log_interp_values(x, xs, ys) - y) < 10 * float_info.epsilon
             for x, y in zip(xs, ys)]
@@ -94,10 +94,10 @@ def test_distribution_interpolation():
         return 1. / (math.exp(x / math.pi) + 1)
 
     xs = range(-5, 5)
-    ys = map(f, xs)
+    ys = list(map(f, xs))
 
     xxs = [x / 5. for x in range(-25, 21)]
-    yys = map(f, xxs)
+    yys = list(map(f, xxs))
 
     assert [abs(dist_interp_values(x, xs, ys) - y) < 10 * float_info.epsilon
             for x, y in zip(xs, ys)]
