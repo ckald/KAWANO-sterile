@@ -285,7 +285,7 @@ C..........COMPUTATIONAL SETTINGS.
 C..........MODEL SETTINGS.
       g   = const2*c(1)            !Modify gravitational constant.
       tau = c(2)                 !Convert n half-life (min) to lifetime (sec).
-      tau = tau/0.98               !Coulomb correction (Ref 2).
+      tau = tau                  !Coulomb correction (Ref 2).
       xnu = c(3)                   !Number of neutrino species.
 
 C30-----COMPUTE INITIAL ABUNDANCES FOR NEUTRON AND PROTON--------------

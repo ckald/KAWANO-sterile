@@ -930,12 +930,12 @@ C-------DEFAULT COMPUTATION PARAMETERS.
       DATA inc0   /30/             !Default accumulation increment.
 
 C--------DEFAULT MODEL PARAMETERS.
-      DATA c0     /1.00,885.7,3.0/!Default variation of 3 parameters.
+      DATA c0     /1.00,880.2,3.0/!Default variation of 3 parameters.
       DATA cosmo0 /0.00/           !Default cosmological constant.
       DATA xi0    /0.00,0.00,0.00/ !Default neutrino degeneracy parameter.
 
 C--------DEFAULT VARIATIONAL PARAMETERS.
       DATA dt0    /1.00e-04/       !Default initial time step.
-      DATA eta0   /6.000e-10/      !Default baryon-to-photon ratio.
+      DATA eta0   /6.0913257e-10/      !Default baryon-to-photon ratio.
 
       END
