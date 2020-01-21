@@ -211,7 +211,8 @@ C20-----PRINTINTO FILE------------------------------------
         shout = xout
         shout(it,8) = shout(it,8) + shout(it,9)  !Add beryllium to lithium.
         shout(it,5) = shout(it,5) + shout(it,4)  !Add tritium to helium-3.
-        shout(it,6) = shout(it,6)-0.0003
+        shout(it,3) = shout(it,3) + 0.0000E-4
+        shout(it,6) = shout(it,6) - 0.0000
      |            !Radiative, coulomb, finite-temperature corrections (Ref 1).
         write(outunit,199) "", "eta", "D", "He3", "He4", "Li7"
  199    FORMAT(6(A13, ' '))

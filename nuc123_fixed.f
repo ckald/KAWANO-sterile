@@ -4596,7 +4596,8 @@ C20-----PRINTINTO FILE------------------------------------
       IF (itime.eq.8) THEN         !Right after a run.
         xout(it,8) = xout(it,8) + xout(it,9)  !Add beryllium to lithium.
         xout(it,5) = xout(it,5) + xout(it,4)  !Add tritium to helium-3.
-        xout(it,6) = xout(it,6)-0.0003
+        xout(it,3) = xout(it,3) + 0.00028E-4
+        xout(it,6) = xout(it,6) - 0.00032
      |            !Radiative, coulomb, finite-temperature corrections (Ref 1).
         write(3,200) etaout(it),xout(it,3),
      |                xout(it,5),xout(it,6),xout(it,8)
